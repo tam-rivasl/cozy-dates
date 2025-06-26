@@ -7,67 +7,22 @@ import { AddTaskDialog } from '@/components/add-task-dialog';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, ClipboardList, Loader2 } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
 import { GoalsSummary } from '@/components/goals-summary';
-
-const today = new Date();
-const initialTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Movie Night: "La La Land"',
-    description: 'Get popcorn, blankets, and enjoy a classic romantic movie at home.',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3, 20, 30),
-    category: 'Date Night',
-    priority: 'Medium',
-    completed: false,
-    createdBy: 'Tamara',
-  },
-  {
-    id: '2',
-    title: 'Plan Summer Vacation',
-    description: 'Research destinations in Italy. Look up flights and hotels.',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7, 18, 0),
-    category: 'Travel Plans',
-    priority: 'High',
-    completed: false,
-    createdBy: 'Carlos',
-  },
-  {
-    id: '3',
-    title: 'Cook Dinner Together',
-    description: 'Try that new pasta recipe we found.',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 19, 0),
-    category: 'To-Do',
-    priority: 'Medium',
-    completed: false,
-    createdBy: 'Tamara',
-  },
-  {
-    id: '4',
-    title: 'Anniversary Dinner',
-    description: 'Celebrate our 5th anniversary at the fancy restaurant downtown.',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30, 19, 30),
-    category: 'Special Event',
-    priority: 'High',
-    completed: true,
-    createdBy: 'Carlos',
-  },
-];
+import { useTasks } from '@/context/TaskContext';
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-  const { toast } = useToast();
-  const { user, isLoading } = useUser();
+  const { user, isLoading: isUserLoading } = useUser();
+  const { tasks, isLoading: areTasksLoading, addTask, toggleComplete, deleteTask, addPhoto } = useTasks();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isUserLoading && !user) {
       router.push('/');
     }
-  }, [user, isLoading, router]);
+  }, [user, isUserLoading, router]);
 
   const { upcomingTasks, completedTasks } = useMemo(() => {
     const upcoming = tasks
@@ -79,40 +34,7 @@ export default function DashboardPage() {
     return { upcomingTasks: upcoming, completedTasks: completed };
   }, [tasks]);
 
-
-  const handleAddTask = (newTask: Omit<Task, 'id' | 'completed' | 'createdBy'>) => {
-    if (!user) return;
-    const taskWithId: Task = {
-      ...newTask,
-      id: crypto.randomUUID(),
-      completed: false,
-      createdBy: user,
-    };
-    setTasks((prev) => [...prev, taskWithId]);
-    toast({
-      title: "Task Added!",
-      description: `"${newTask.title}" has been added to your list.`,
-    })
-  };
-  
-  const handleToggleComplete = (taskId: string) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
-     toast({
-      title: "Task Removed",
-      description: "The task has been deleted.",
-      variant: "destructive"
-    })
-  };
-
-  if (isLoading || !user) {
+  if (isUserLoading || areTasksLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -135,7 +57,7 @@ export default function DashboardPage() {
         <AddTaskDialog
           isOpen={isAddDialogOpen}
           onOpenChange={setAddDialogOpen}
-          onAddTask={handleAddTask}
+          onAddTask={addTask}
         />
         
         <div className="mb-8">
@@ -151,8 +73,9 @@ export default function DashboardPage() {
                   <TaskCard
                     key={task.id}
                     task={task}
-                    onToggleComplete={handleToggleComplete}
-                    onDelete={handleDeleteTask}
+                    onToggleComplete={toggleComplete}
+                    onDelete={deleteTask}
+                    onAddPhoto={addPhoto}
                   />
                 ))}
               </div>
@@ -171,8 +94,9 @@ export default function DashboardPage() {
                   <TaskCard
                     key={task.id}
                     task={task}
-                    onToggleComplete={handleToggleComplete}
-                    onDelete={handleDeleteTask}
+                    onToggleComplete={toggleComplete}
+                    onDelete={deleteTask}
+                    onAddPhoto={addPhoto}
                   />
                 ))}
               </div>

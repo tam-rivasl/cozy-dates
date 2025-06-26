@@ -7,6 +7,7 @@ export interface Task {
   priority: 'High' | 'Medium' | 'Low';
   completed: boolean;
   createdBy: User;
+  photos?: string[];
 }
 
 export type User = 'Tamara' | 'Carlos';

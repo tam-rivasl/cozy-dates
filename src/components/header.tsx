@@ -1,10 +1,11 @@
 'use client';
 
-import { Heart, LogOut } from 'lucide-react';
+import { Heart, LogOut, BookHeart } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import Link from 'next/link';
 
 export function Header() {
   const { user, setUser } = useUser();
@@ -28,14 +29,20 @@ export function Header() {
             Cozy Dates
           </span>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
+            <Link href="/memories" passHref>
+              <Button variant="ghost" size="sm">
+                <BookHeart className="mr-2 h-4 w-4" />
+                Our Memories
+              </Button>
+            </Link>
             {user && (
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={avatarUrl} alt={user} />
                   <AvatarFallback>{user.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="text-sm">
+                <div className="text-sm hidden md:block">
                   <span className="font-medium">Hello, {user}!</span>
                 </div>
               </div>

@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { UserProvider } from '@/context/UserContext';
+import { TaskProvider } from '@/context/TaskContext';
 
 export const metadata: Metadata = {
   title: 'Cozy Dates',
@@ -24,8 +25,10 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <UserProvider>
-          {children}
-          <Toaster />
+          <TaskProvider>
+            {children}
+            <Toaster />
+          </TaskProvider>
         </UserProvider>
       </body>
     </html>
