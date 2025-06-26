@@ -1,7 +1,6 @@
 'use client';
 
 import { Heart, LogOut } from 'lucide-react';
-import { ThemeToggle } from './theme-toggle';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/button';
@@ -45,7 +44,6 @@ export function Header() {
               <LogOut className="mr-2" />
               Switch User
             </Button>
-            <ThemeToggle />
         </div>
       </div>
     </header>

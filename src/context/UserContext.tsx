@@ -39,22 +39,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const newTheme = `theme-${user.toLowerCase()}`;
       setTheme(newTheme);
       document.documentElement.className = '';
-      
-      const storedThemeMode = localStorage.getItem('theme');
-      if (storedThemeMode === 'dark') {
-          document.documentElement.classList.add('dark');
-      }
-
       document.documentElement.classList.add(newTheme);
     } else {
       localStorage.removeItem('cozy-user');
       setTheme('');
       document.documentElement.className = '';
-
-      const storedThemeMode = localStorage.getItem('theme');
-      if (storedThemeMode === 'dark') {
-          document.documentElement.classList.add('dark');
-      }
     }
   }, [user, isLoading]);
 
