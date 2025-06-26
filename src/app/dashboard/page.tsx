@@ -10,6 +10,7 @@ import { PlusCircle, ClipboardList, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
+import { GoalsSummary } from '@/components/goals-summary';
 
 const today = new Date();
 const initialTasks: Task[] = [
@@ -21,6 +22,7 @@ const initialTasks: Task[] = [
     category: 'Date Night',
     priority: 'Medium',
     completed: false,
+    createdBy: 'Tamara',
   },
   {
     id: '2',
@@ -30,6 +32,7 @@ const initialTasks: Task[] = [
     category: 'Travel Plans',
     priority: 'High',
     completed: false,
+    createdBy: 'Carlos',
   },
   {
     id: '3',
@@ -39,6 +42,7 @@ const initialTasks: Task[] = [
     category: 'To-Do',
     priority: 'Medium',
     completed: false,
+    createdBy: 'Tamara',
   },
   {
     id: '4',
@@ -48,6 +52,7 @@ const initialTasks: Task[] = [
     category: 'Special Event',
     priority: 'High',
     completed: true,
+    createdBy: 'Carlos',
   },
 ];
 
@@ -75,11 +80,13 @@ export default function DashboardPage() {
   }, [tasks]);
 
 
-  const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
+  const handleAddTask = (newTask: Omit<Task, 'id' | 'completed' | 'createdBy'>) => {
+    if (!user) return;
     const taskWithId: Task = {
       ...newTask,
       id: crypto.randomUUID(),
       completed: false,
+      createdBy: user,
     };
     setTasks((prev) => [...prev, taskWithId]);
     toast({
@@ -105,17 +112,12 @@ export default function DashboardPage() {
     })
   };
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
-  }
-  
-  // Render nothing or a loader while redirecting
-  if (!user) {
-    return null; 
   }
 
   return (
@@ -135,6 +137,10 @@ export default function DashboardPage() {
           onOpenChange={setAddDialogOpen}
           onAddTask={handleAddTask}
         />
+        
+        <div className="mb-8">
+          <GoalsSummary tasks={tasks} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           <div className="space-y-4">

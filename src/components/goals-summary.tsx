@@ -1,0 +1,85 @@
+'use client';
+
+import type { Task } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { useMemo } from 'react';
+import { Trophy, CheckCircle2, Lightbulb } from 'lucide-react';
+
+interface GoalsSummaryProps {
+  tasks: Task[];
+}
+
+export function GoalsSummary({ tasks }: GoalsSummaryProps) {
+  const {
+    completedCount,
+    tamaraIdeaCount,
+    carlosIdeaCount,
+    totalIdeas,
+    tamaraProgress,
+    carlosProgress,
+  } = useMemo(() => {
+    const completed = tasks.filter((task) => task.completed).length;
+    const tamaraIdeas = tasks.filter((task) => task.createdBy === 'Tamara').length;
+    const carlosIdeas = tasks.filter((task) => task.createdBy === 'Carlos').length;
+    const total = tamaraIdeas + carlosIdeas;
+
+    return {
+      completedCount: completed,
+      tamaraIdeaCount: tamaraIdeas,
+      carlosIdeaCount: carlosIdeas,
+      totalIdeas: total,
+      tamaraProgress: total > 0 ? (tamaraIdeas / total) * 100 : 0,
+      carlosProgress: total > 0 ? (carlosIdeas / total) * 100 : 0,
+    };
+  }, [tasks]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Trophy className="text-primary" />
+          <span>Our Couple Goals</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center justify-around text-center">
+          <div className="flex flex-col items-center gap-2">
+            <CheckCircle2 className="h-8 w-8 text-green-500" />
+            <p className="text-2xl font-bold">{completedCount}</p>
+            <p className="text-sm text-muted-foreground">Plans Completed</p>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <Lightbulb className="h-8 w-8 text-yellow-500" />
+            <p className="text-2xl font-bold">{totalIdeas}</p>
+            <p className="text-sm text-muted-foreground">Total Ideas</p>
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="text-sm font-medium mb-2 text-center">Idea Contribution</h3>
+          <div className="space-y-3">
+             <div className="flex justify-between items-center gap-4">
+               <span className="text-sm font-medium text-theme-tamara-primary">Tamara's Ideas</span>
+               <span className="text-sm font-bold">{tamaraIdeaCount}</span>
+             </div>
+             <div className="flex justify-between items-center gap-4">
+               <span className="text-sm font-medium text-theme-carlos-primary">Carlos's Ideas</span>
+               <span className="text-sm font-bold">{carlosIdeaCount}</span>
+             </div>
+          </div>
+           <div className="mt-2 w-full h-4 rounded-full flex overflow-hidden bg-muted">
+              <div
+                className="h-full bg-primary transition-all duration-500"
+                style={{ width: `${tamaraProgress}%` }}
+              />
+              <div
+                className="h-full bg-secondary transition-all duration-500"
+                style={{ width: `${carlosProgress}%` }}
+              />
+            </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

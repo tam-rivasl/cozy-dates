@@ -5,7 +5,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Tag, Flag, Trash2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CalendarDays, Tag, Flag, Trash2, User } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TaskCardProps {
@@ -20,6 +21,8 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
     Medium: 'bg-yellow-500/80 hover:bg-yellow-500',
     Low: 'bg-green-500/80 hover:bg-green-500',
   };
+
+  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/tamara.svg' : '/carlos.svg';
 
   return (
     <Card className={`transition-all duration-300 ${task.completed ? 'bg-card/60 dark:bg-card/40' : 'bg-card'}`}>
@@ -52,7 +55,7 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-         <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground">
+         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center">
               <CalendarDays className="mr-2 h-4 w-4" />
               <span>{format(task.date, 'PPP p')}</span>
@@ -64,6 +67,17 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
             <div className="flex items-center">
               <Flag className="mr-2 h-4 w-4" />
               <Badge className={`${priorityColors[task.priority]} text-white`}>{task.priority}</Badge>
+            </div>
+            <div className="flex items-center">
+              <User className="mr-2 h-4 w-4" />
+               <div className="flex items-center gap-2">
+                <span>Idea by:</span>
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={creatorAvatarUrl} alt={task.createdBy} />
+                  <AvatarFallback>{task.createdBy.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="font-medium">{task.createdBy}</span>
+              </div>
             </div>
           </div>
       </CardContent>

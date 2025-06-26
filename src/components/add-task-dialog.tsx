@@ -33,7 +33,7 @@ import type { Task } from '@/lib/types';
 interface AddTaskDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddTask: (task: Omit<Task, 'id' | 'completed'>) => void;
+  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'createdBy'>) => void;
 }
 
 const taskSchema = z.object({

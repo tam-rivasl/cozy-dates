@@ -17,11 +17,9 @@ export function Header() {
   };
 
   const avatarUrl = user === 'Tamara' 
-    ? "https://placehold.co/128x128.png" 
-    : "https://placehold.co/128x128.png";
+    ? "/tamara.svg" 
+    : "/carlos.svg";
   
-  const avatarAiHint = user === 'Tamara' ? "woman smiling" : "man smiling";
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -35,7 +33,7 @@ export function Header() {
             {user && (
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={avatarUrl} alt={user} data-ai-hint={avatarAiHint} />
+                  <AvatarImage src={avatarUrl} alt={user} />
                   <AvatarFallback>{user.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-sm">

@@ -33,7 +33,7 @@ export default function LoginPage() {
           >
             <CardContent className="flex flex-col items-center p-6">
               <Avatar className="w-32 h-32 mb-4 border-4 border-transparent group-hover:border-primary transition-all">
-                <AvatarImage src="https://placehold.co/128x128.png" alt="Tamara" data-ai-hint="woman smiling" />
+                <AvatarImage src="/tamara.svg" alt="Tamara" />
                 <AvatarFallback>T</AvatarFallback>
               </Avatar>
               <h2 className="text-2xl font-headline font-bold">Tamara</h2>
@@ -48,7 +48,7 @@ export default function LoginPage() {
           >
             <CardContent className="flex flex-col items-center p-6">
               <Avatar className="w-32 h-32 mb-4 border-4 border-transparent group-hover:border-primary transition-all">
-                <AvatarImage src="https://placehold.co/128x128.png" alt="Carlos" data-ai-hint="man smiling" />
+                <AvatarImage src="/carlos.svg" alt="Carlos" />
                 <AvatarFallback>C</AvatarFallback>
               </Avatar>
               <h2 className="text-2xl font-headline font-bold">Carlos</h2>
