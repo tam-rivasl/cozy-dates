@@ -1,20 +1,21 @@
 'use client';
 
-import type { WatchlistItem, User } from '@/lib/types';
+import type { WatchlistItem } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Trash2, User as UserIcon, Clapperboard, Tv, StickyNote } from 'lucide-react';
+import { Trash2, User as UserIcon, Clapperboard, Tv, StickyNote, CalendarPlus } from 'lucide-react';
 
 interface WatchlistItemCardProps {
   item: WatchlistItem;
   onToggleStatus: (id: string) => void;
   onDelete: (id: string) => void;
+  onPlanMovieNight: (item: WatchlistItem) => void;
 }
 
-export function WatchlistItemCard({ item, onToggleStatus, onDelete }: WatchlistItemCardProps) {
+export function WatchlistItemCard({ item, onToggleStatus, onDelete, onPlanMovieNight }: WatchlistItemCardProps) {
   const creatorAvatarUrl = item.addedBy === 'Tamara' ? '/tamara.svg' : '/carlos.svg';
   const isWatched = item.status === 'Watched';
 
@@ -71,6 +72,15 @@ export function WatchlistItemCard({ item, onToggleStatus, onDelete }: WatchlistI
                     Notes
                 </h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap pl-6">{item.notes}</p>
+            </div>
+          )}
+
+          {item.status === 'To Watch' && (
+            <div className="pt-3 mt-3 border-t">
+              <Button variant="outline" size="sm" className="w-full" onClick={() => onPlanMovieNight(item)}>
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Plan Movie Night
+              </Button>
             </div>
           )}
       </CardContent>

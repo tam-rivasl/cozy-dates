@@ -30,12 +30,7 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Task } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
-
-interface AddTaskDialogProps {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'createdBy' | 'photos'>) => void;
-}
+import { useEffect } from 'react';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
@@ -43,17 +38,26 @@ const taskSchema = z.object({
   date: z.date({ required_error: 'A date is required.' }),
   hour: z.string({ required_error: 'An hour is required.' }),
   minute: z.string({ required_error: 'A minute is required.' }),
-  category: z.enum(['Date Night', 'Travel Plans', 'To-Do', 'Special Event']),
-  priority: z.enum(['High', 'Medium', 'Low']),
+  category: z.enum(['Date Night', 'Travel Plans', 'To-Do', 'Special Event', 'Movie Day']),
+  priority: z.enum(['High', 'Medium', 'Low'], {
+    errorMap: () => ({ message: 'Please select a priority.' }),
+  }),
   notes: z.string().max(500, 'Notes are too long').optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
 
+interface AddTaskDialogProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'createdBy' | 'photos'>) => void;
+  initialData?: Partial<TaskFormValues>;
+}
+
 const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
-export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialogProps) {
+export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: AddTaskDialogProps) {
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -63,9 +67,23 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
       hour: '19',
       minute: '00',
       category: 'Date Night',
-      priority: 'Medium',
     },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        title: initialData?.title || '',
+        description: initialData?.description || '',
+        notes: initialData?.notes || '',
+        hour: '19',
+        minute: '00',
+        category: initialData?.category || 'Date Night',
+        priority: initialData?.priority,
+        date: initialData?.date,
+      });
+    }
+  }, [isOpen, initialData, form]);
 
   const onSubmit = (data: TaskFormValues) => {
     const combinedDate = new Date(data.date);
@@ -215,7 +233,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Category</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a category" />
@@ -223,6 +241,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="Date Night">Date Night</SelectItem>
+                              <SelectItem value="Movie Day">Movie Day</SelectItem>
                               <SelectItem value="Travel Plans">Travel Plans</SelectItem>
                               <SelectItem value="To-Do">To-Do</SelectItem>
                               <SelectItem value="Special Event">Special Event</SelectItem>
@@ -238,7 +257,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Priority</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a priority" />

@@ -4,23 +4,40 @@ import { useState, useMemo, useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
 import { useWatchlist } from '@/context/WatchlistContext';
+import { useTasks } from '@/context/TaskContext';
+import type { WatchlistItem } from '@/lib/types';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { AddWatchlistItemDialog } from '@/components/add-watchlist-item-dialog';
 import { WatchlistItemCard } from '@/components/watchlist-item-card';
 import { Film, PlusCircle, Loader2, Video } from 'lucide-react';
+import { AddTaskDialog } from '@/components/add-task-dialog';
 
 export default function WatchlistPage() {
     const { user, isLoading: isUserLoading } = useUser();
     const { watchlistItems, isLoading: areItemsLoading, addWatchlistItem, toggleStatus, deleteWatchlistItem } = useWatchlist();
+    const { addTask } = useTasks();
     const router = useRouter();
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+
+    const [isAddPlanDialogOpen, setAddPlanDialogOpen] = useState(false);
+    const [initialPlanData, setInitialPlanData] = useState<any>();
 
     useEffect(() => {
         if (!isUserLoading && !user) {
             router.push('/');
         }
     }, [user, isUserLoading, router]);
+
+    const handlePlanMovieNight = (item: WatchlistItem) => {
+        setInitialPlanData({
+            title: item.title,
+            description: 'Dia de pelis',
+            notes: item.notes,
+            category: 'Movie Day'
+        });
+        setAddPlanDialogOpen(true);
+    };
 
     const { toWatchItems, watchedItems } = useMemo(() => {
         const toWatch = watchlistItems.filter((item) => item.status === 'To Watch');
@@ -58,6 +75,13 @@ export default function WatchlistPage() {
                     onAddItem={addWatchlistItem}
                 />
 
+                <AddTaskDialog 
+                    isOpen={isAddPlanDialogOpen}
+                    onOpenChange={setAddPlanDialogOpen}
+                    onAddTask={addTask}
+                    initialData={initialPlanData}
+                />
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                     <div className="space-y-4">
                         <h2 className="text-2xl font-headline text-primary">To Watch</h2>
@@ -69,6 +93,7 @@ export default function WatchlistPage() {
                                         item={item}
                                         onToggleStatus={toggleStatus}
                                         onDelete={deleteWatchlistItem}
+                                        onPlanMovieNight={handlePlanMovieNight}
                                     />
                                 ))}
                             </div>
@@ -89,6 +114,7 @@ export default function WatchlistPage() {
                                         item={item}
                                         onToggleStatus={toggleStatus}
                                         onDelete={deleteWatchlistItem}
+                                        onPlanMovieNight={handlePlanMovieNight}
                                     />
                                 ))}
                             </div>

@@ -3,7 +3,7 @@ export interface Task {
   title: string;
   description: string;
   date: Date;
-  category: 'Date Night' | 'Travel Plans' | 'To-Do' | 'Special Event';
+  category: 'Date Night' | 'Travel Plans' | 'To-Do' | 'Special Event' | 'Movie Day';
   priority: 'High' | 'Medium' | 'Low';
   completed: boolean;
   createdBy: User;
