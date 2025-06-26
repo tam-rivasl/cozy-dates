@@ -45,7 +45,6 @@ export function MemoryCard({ task }: { task: Task }) {
                       src={photo} 
                       alt={`Memory photo ${index + 1}`}
                       fill
-                      data-ai-hint="couple event"
                       className="rounded-lg object-cover"
                     />
                   </div>

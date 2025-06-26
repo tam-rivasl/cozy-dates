@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import type { Task } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,12 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarDays, Tag, Flag, Trash2, User, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { useToast } from "@/hooks/use-toast";
 
 interface TaskCardProps {
   task: Task;
   onToggleComplete: (id: string) => void;
   onDelete: (id: string) => void;
-  onAddPhoto: (id: string) => void;
+  onAddPhoto: (id: string, photoDataUri: string) => void;
 }
 
 export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskCardProps) {
@@ -25,6 +27,38 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
   };
 
   const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/tamara.svg' : '/carlos.svg';
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const handleAddPhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid File Type',
+        description: 'Please upload an image file (e.g., JPG, PNG, GIF).',
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUri = reader.result as string;
+      onAddPhoto(task.id, dataUri);
+    };
+    reader.readAsDataURL(file);
+
+    if (event.target) {
+      event.target.value = "";
+    }
+  };
+
 
   return (
     <Card className={`transition-all duration-300 ${task.completed ? 'bg-card/60 dark:bg-card/40' : 'bg-card'}`}>
@@ -87,10 +121,19 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
             <div className="w-full pt-4 border-t">
               <div className="flex justify-between items-center w-full mb-2">
                 <h4 className="text-sm font-medium">Memories</h4>
-                <Button variant="outline" size="sm" onClick={() => onAddPhoto(task.id)}>
-                  <Camera className="mr-2 h-4 w-4" />
-                  Add Photo
-                </Button>
+                <div>
+                  <Button variant="outline" size="sm" onClick={handleAddPhotoClick}>
+                    <Camera className="mr-2 h-4 w-4" />
+                    Add Photo
+                  </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
               </div>
               {task.photos && task.photos.length > 0 ? (
                  <div className="grid grid-cols-4 gap-2">
@@ -101,7 +144,6 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
                         alt={`Memory ${index + 1}`} 
                         width={100} 
                         height={100}
-                        data-ai-hint="couple event"
                         className="rounded-md object-cover w-full h-full" 
                       />
                       {index === 3 && task.photos!.length > 4 && (

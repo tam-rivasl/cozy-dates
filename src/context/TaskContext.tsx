@@ -11,7 +11,7 @@ interface TaskContextType {
   addTask: (task: Omit<Task, 'id' | 'completed' | 'createdBy' | 'photos'>) => void;
   toggleComplete: (taskId: string) => void;
   deleteTask: (taskId: string) => void;
-  addPhoto: (taskId: string) => void;
+  addPhoto: (taskId: string, photoDataUri: string) => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -133,12 +133,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     })
   };
 
-  const addPhoto = (taskId: string) => {
-    const photoUrl = `https://placehold.co/600x400.png`;
+  const addPhoto = (taskId: string, photoDataUri: string) => {
     setTasks(prev =>
       prev.map(task => {
         if (task.id === taskId) {
-          return { ...task, photos: [...(task.photos || []), photoUrl] };
+          return { ...task, photos: [...(task.photos || []), photoDataUri] };
         }
         return task;
       })
