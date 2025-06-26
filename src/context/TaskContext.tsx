@@ -138,16 +138,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setTasks(prev =>
       prev.map(task => {
         if (task.id === taskId) {
-          const updatedTask = { ...task, photos: [...(task.photos || []), photoUrl] };
-          toast({
-            title: "Memory Added!",
-            description: "A new photo has been added to your plan.",
-          });
-          return updatedTask;
+          return { ...task, photos: [...(task.photos || []), photoUrl] };
         }
         return task;
       })
     );
+     toast({
+      title: "Memory Added!",
+      description: "A new photo has been added to your plan.",
+    });
   };
   
   return (
