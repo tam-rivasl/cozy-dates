@@ -9,6 +9,7 @@ export interface Task {
   createdBy: User;
   photos?: string[];
   notes?: string;
+  watchlistItemId?: string;
 }
 
 export interface WatchlistItem {

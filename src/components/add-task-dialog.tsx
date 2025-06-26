@@ -43,6 +43,7 @@ const taskSchema = z.object({
     errorMap: () => ({ message: 'Please select a priority.' }),
   }),
   notes: z.string().max(500, 'Notes are too long').optional(),
+  watchlistItemId: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -67,6 +68,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
       hour: '19',
       minute: '00',
       category: 'Date Night',
+      watchlistItemId: undefined,
     },
   });
 
@@ -81,6 +83,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
         category: initialData?.category || 'Date Night',
         priority: initialData?.priority,
         date: initialData?.date,
+        watchlistItemId: initialData?.watchlistItemId,
       });
     }
   }, [isOpen, initialData, form]);
@@ -149,7 +152,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4 items-end">
                   <FormField
                     control={form.control}
                     name="date"

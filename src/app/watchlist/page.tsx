@@ -34,7 +34,8 @@ export default function WatchlistPage() {
             title: item.title,
             description: 'Dia de pelis',
             notes: item.notes,
-            category: 'Movie Day'
+            category: 'Movie Day',
+            watchlistItemId: item.id,
         });
         setAddPlanDialogOpen(true);
     };

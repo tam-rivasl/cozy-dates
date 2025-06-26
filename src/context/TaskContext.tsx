@@ -4,6 +4,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import type { Task } from '@/lib/types';
 import { useUser } from '@/context/UserContext';
 import { useToast } from "@/hooks/use-toast";
+import { useWatchlist } from './WatchlistContext';
 
 interface TaskContextType {
   tasks: Task[];
@@ -72,6 +73,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useUser();
   const { toast } = useToast();
+  const { markAsWatched } = useWatchlist();
 
   useEffect(() => {
     setIsLoading(true);
@@ -112,17 +114,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       createdBy: user,
       photos: [],
     };
-    setTasks((prev) => {
-      const newTasks = [taskWithId, ...prev];
-      toast({
-        title: "Task Added!",
-        description: `"${newTask.title}" has been added to your list.`,
-      });
-      return newTasks;
+    setTasks((prev) => [taskWithId, ...prev]);
+    toast({
+      title: "Task Added!",
+      description: `"${newTask.title}" has been added to your list.`,
     });
   };
 
   const toggleComplete = (taskId: string) => {
+     const taskToUpdate = tasks.find((task) => task.id === taskId);
+
+    if (taskToUpdate && !taskToUpdate.completed && taskToUpdate.watchlistItemId) {
+      markAsWatched(taskToUpdate.watchlistItemId);
+    }
+
     setTasks((prev) =>
       prev.map((task) =>
         task.id === taskId ? { ...task, completed: !task.completed } : task
@@ -131,14 +136,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteTask = (taskId: string) => {
-    setTasks((prev) => {
-      const newTasks = prev.filter((task) => task.id !== taskId);
-      toast({
-        title: "Task Removed",
-        description: "The task has been deleted.",
-        variant: "destructive"
-      });
-      return newTasks;
+    setTasks((prev) => prev.filter((task) => task.id !== taskId));
+    toast({
+      title: "Task Removed",
+      description: "The task has been deleted.",
+      variant: "destructive"
     });
   };
 

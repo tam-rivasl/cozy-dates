@@ -11,6 +11,7 @@ interface WatchlistContextType {
   addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => void;
   toggleStatus: (itemId: string) => void;
   deleteWatchlistItem: (itemId: string) => void;
+  markAsWatched: (itemId: string) => void;
 }
 
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
@@ -75,6 +76,16 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const markAsWatched = (itemId: string) => {
+    setWatchlistItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId && item.status === 'To Watch'
+          ? { ...item, status: 'Watched' }
+          : item
+      )
+    );
+  };
+
   const deleteWatchlistItem = (itemId: string) => {
     setWatchlistItems((prev) => prev.filter((item) => item.id !== itemId));
      toast({
@@ -85,7 +96,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   };
   
   return (
-    <WatchlistContext.Provider value={{ watchlistItems, isLoading, addWatchlistItem, toggleStatus, deleteWatchlistItem }}>
+    <WatchlistContext.Provider value={{ watchlistItems, isLoading, addWatchlistItem, toggleStatus, deleteWatchlistItem, markAsWatched }}>
       {children}
     </WatchlistContext.Provider>
   );

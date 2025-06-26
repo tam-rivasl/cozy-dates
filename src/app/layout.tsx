@@ -27,14 +27,14 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <UserProvider>
-          <TaskProvider>
-            <WatchlistProvider>
+          <WatchlistProvider>
+            <TaskProvider>
               <MusicProvider>
                 {children}
                 <Toaster />
               </MusicProvider>
-            </WatchlistProvider>
-          </TaskProvider>
+            </TaskProvider>
+          </WatchlistProvider>
         </UserProvider>
       </body>
     </html>
