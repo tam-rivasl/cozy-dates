@@ -4,18 +4,32 @@ import type { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { format } from 'date-fns';
-import { CalendarDays, User } from 'lucide-react';
+import { CalendarDays, User, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
+import { Button } from './ui/button';
 
-export function MemoryCard({ task }: { task: Task }) {
+export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: string) => void }) {
   const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/tamara.svg' : '/carlos.svg';
 
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">{task.title}</CardTitle>
-        <CardDescription>{task.description}</CardDescription>
+        <div className="flex justify-between items-start gap-4">
+          <div>
+            <CardTitle className="font-headline text-2xl">{task.title}</CardTitle>
+            <CardDescription>{task.description}</CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(task.id)}
+            aria-label={`Delete memory "${task.title}"`}
+            className="text-muted-foreground hover:text-destructive shrink-0"
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
+        </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
             <div className="flex items-center">
                 <CalendarDays className="mr-2 h-4 w-4" />

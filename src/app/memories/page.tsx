@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 
 export default function MemoriesPage() {
     const { user, isLoading: isUserLoading } = useUser();
-    const { tasks, isLoading: areTasksLoading } = useTasks();
+    const { tasks, isLoading: areTasksLoading, deleteTask } = useTasks();
     const router = useRouter();
 
     useEffect(() => {
@@ -45,7 +45,7 @@ export default function MemoriesPage() {
                 {memories.length > 0 ? (
                     <div className="space-y-8">
                         {memories.map(task => (
-                            <MemoryCard key={task.id} task={task} />
+                            <MemoryCard key={task.id} task={task} onDelete={deleteTask} />
                         ))}
                     </div>
                 ) : (
