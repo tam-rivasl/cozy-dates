@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Task } from '@/lib/types';
 import { Header } from '@/components/header';
 import { AddTaskDialog } from '@/components/add-task-dialog';
@@ -53,6 +53,49 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const { toast } = useToast();
+  const notificationTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Register the service worker for PWA capabilities like notifications
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.error('Service worker registration failed:', err);
+      });
+    }
+
+    // Handle notification scheduling
+    if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator) {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted' && upcomingTasks.length > 0) {
+          const nextTask = upcomingTasks[0];
+          const now = new Date().getTime();
+          const timeUntilNotification = nextTask.date.getTime() - now;
+
+          if (notificationTimeout.current) {
+            clearTimeout(notificationTimeout.current);
+          }
+
+          if (timeUntilNotification > 0) {
+            notificationTimeout.current = setTimeout(() => {
+              navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification('Upcoming Plan Reminder!', {
+                  body: `Don't forget: ${nextTask.title}`,
+                  icon: '/icon-192x192.png',
+                  vibrate: [200, 100, 200],
+                });
+              });
+            }, timeUntilNotification);
+          }
+        }
+      });
+    }
+
+    return () => {
+      if (notificationTimeout.current) {
+        clearTimeout(notificationTimeout.current);
+      }
+    };
+  }, [tasks]);
 
 
   const { upcomingTasks, completedTasks } = useMemo(() => {
