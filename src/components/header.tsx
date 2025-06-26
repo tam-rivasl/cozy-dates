@@ -1,5 +1,4 @@
 import { Heart } from 'lucide-react';
-import { DateSuggester } from './date-suggester';
 import { ThemeToggle } from './theme-toggle';
 
 export function Header() {
@@ -13,7 +12,6 @@ export function Header() {
           </span>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
-            <DateSuggester />
             <ThemeToggle />
         </div>
       </div>
