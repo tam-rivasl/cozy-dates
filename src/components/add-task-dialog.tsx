@@ -46,7 +46,6 @@ const taskSchema = z.object({
   category: z.enum(['Date Night', 'Travel Plans', 'To-Do', 'Special Event']),
   priority: z.enum(['High', 'Medium', 'Low']),
   notes: z.string().max(500, 'Notes are too long').optional(),
-  playlistUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -61,7 +60,6 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
       title: '',
       description: '',
       notes: '',
-      playlistUrl: '',
       hour: '19',
       minute: '00',
       category: 'Date Night',
@@ -125,9 +123,9 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>A Little Note (Optional)</FormLabel>
+                      <FormLabel>Notes (Optional)</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="e.g., Remember snacks, or write a sweet dedication..." {...field} />
+                        <Textarea placeholder="e.g., Remember snacks, blanket, etc." {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,19 +255,6 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                       )}
                     />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="playlistUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dedicate a Playlist (Link)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://open.spotify.com/..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </ScrollArea>
             <DialogFooter className="pt-4">

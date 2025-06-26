@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { UserProvider } from '@/context/UserContext';
 import { TaskProvider } from '@/context/TaskContext';
 import { WatchlistProvider } from '@/context/WatchlistContext';
+import { MusicProvider } from '@/context/MusicContext';
 
 export const metadata: Metadata = {
   title: 'Cozy Dates',
@@ -28,8 +29,10 @@ export default function RootLayout({
         <UserProvider>
           <TaskProvider>
             <WatchlistProvider>
-              {children}
-              <Toaster />
+              <MusicProvider>
+                {children}
+                <Toaster />
+              </MusicProvider>
             </WatchlistProvider>
           </TaskProvider>
         </UserProvider>

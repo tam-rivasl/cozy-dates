@@ -29,7 +29,6 @@ const initialTasks: Task[] = [
     createdBy: 'Tamara',
     photos: [],
     notes: 'Remember to buy the extra buttery popcorn!',
-    playlistUrl: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',
   },
   {
     id: '2',
@@ -64,7 +63,6 @@ const initialTasks: Task[] = [
     completed: true,
     createdBy: 'Carlos',
     photos: ['https://placehold.co/600x400.png'],
-    playlistUrl: 'https://music.youtube.com/playlist?list=PL4fGSI1pDJn5kI81J1fYC0_B_k3qByOU5',
   },
 ];
 
@@ -76,6 +74,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    setIsLoading(true);
     try {
       const storedTasks = localStorage.getItem('cozy-tasks');
       if (storedTasks) {
@@ -113,11 +112,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       createdBy: user,
       photos: [],
     };
-    setTasks((prev) => [taskWithId, ...prev]);
-    toast({
-      title: "Task Added!",
-      description: `"${newTask.title}" has been added to your list.`,
-    })
+    setTasks((prev) => {
+      const newTasks = [taskWithId, ...prev];
+      toast({
+        title: "Task Added!",
+        description: `"${newTask.title}" has been added to your list.`,
+      });
+      return newTasks;
+    });
   };
 
   const toggleComplete = (taskId: string) => {
@@ -129,26 +131,30 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteTask = (taskId: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
-     toast({
-      title: "Task Removed",
-      description: "The task has been deleted.",
-      variant: "destructive"
-    })
+    setTasks((prev) => {
+      const newTasks = prev.filter((task) => task.id !== taskId);
+      toast({
+        title: "Task Removed",
+        description: "The task has been deleted.",
+        variant: "destructive"
+      });
+      return newTasks;
+    });
   };
 
   const addPhoto = (taskId: string, photoDataUri: string) => {
-    setTasks(prev =>
-      prev.map(task => {
+    setTasks(prev => {
+      const newTasks = prev.map(task => {
         if (task.id === taskId) {
           return { ...task, photos: [...(task.photos || []), photoDataUri] };
         }
         return task;
-      })
-    );
-     toast({
-      title: "Memory Added!",
-      description: "A new photo has been added to your plan.",
+      });
+       toast({
+        title: "Memory Added!",
+        description: "A new photo has been added to your plan.",
+      });
+      return newTasks;
     });
   };
   
