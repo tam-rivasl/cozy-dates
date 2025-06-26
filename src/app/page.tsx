@@ -21,14 +21,14 @@ export default function LoginPage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-8">
       <div className="text-center mb-12">
         <Heart className="h-16 w-16 text-primary mx-auto mb-4" />
-        <h1 className="text-5xl font-headline font-bold">Cozy Dates</h1>
+        <h1 className="text-4xl sm:text-5xl font-headline font-bold">Cozy Dates</h1>
         <p className="text-muted-foreground text-lg mt-2">Who is planning today?</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
         <motion.div whileHover={{ scale: 1.05, y: -10 }} transition={{ type: 'spring', stiffness: 300 }}>
           <Card
-            className="w-64 cursor-pointer transition-all hover:shadow-2xl hover:shadow-primary/20"
+            className="w-full max-w-xs sm:w-64 cursor-pointer transition-all hover:shadow-2xl hover:shadow-primary/20"
             onClick={() => handleUserSelect('Tamara')}
           >
             <CardContent className="flex flex-col items-center p-6">
@@ -43,7 +43,7 @@ export default function LoginPage() {
 
         <motion.div whileHover={{ scale: 1.05, y: -10 }} transition={{ type: 'spring', stiffness: 300 }}>
           <Card
-            className="w-64 cursor-pointer transition-all hover:shadow-2xl hover:shadow-primary/20"
+            className="w-full max-w-xs sm:w-64 cursor-pointer transition-all hover:shadow-2xl hover:shadow-primary/20"
             onClick={() => handleUserSelect('Carlos')}
           >
             <CardContent className="flex flex-col items-center p-6">

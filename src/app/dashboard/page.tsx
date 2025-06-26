@@ -46,7 +46,7 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
       <main className="flex-1 p-4 md:p-8">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col items-start gap-4 mb-6 sm:flex-row sm:justify-between sm:items-center">
           <h1 className="text-3xl md:text-4xl font-headline">Our Shared Plans</h1>
           <Button onClick={() => setAddDialogOpen(true)}>
             <PlusCircle className="mr-2" />

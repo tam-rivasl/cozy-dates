@@ -152,12 +152,12 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-3 gap-4 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                   <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col col-span-3 sm:col-span-1">
+                      <FormItem className="flex flex-col">
                         <FormLabel>Date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>

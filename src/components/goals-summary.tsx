@@ -43,7 +43,7 @@ export function GoalsSummary({ tasks }: GoalsSummaryProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex items-center justify-around text-center">
+        <div className="flex flex-col gap-8 text-center sm:flex-row sm:justify-around sm:items-center">
           <div className="flex flex-col items-center gap-2">
             <CheckCircle2 className="h-8 w-8 text-green-500" />
             <p className="text-2xl font-bold">{completedCount}</p>

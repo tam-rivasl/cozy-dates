@@ -30,7 +30,7 @@ export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: stri
             <Trash2 className="h-5 w-5" />
           </Button>
         </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
             <div className="flex items-center">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 <span>{format(task.date, 'PPP')}</span>

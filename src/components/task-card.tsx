@@ -93,7 +93,7 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
             <div className="flex items-center">
               <CalendarDays className="mr-2 h-4 w-4" />
               <span>{format(task.date, 'PPP p')}</span>
