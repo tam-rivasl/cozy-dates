@@ -55,7 +55,7 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
          <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center">
               <CalendarDays className="mr-2 h-4 w-4" />
-              <span>{format(task.date, 'PPP')}</span>
+              <span>{format(task.date, 'PPP p')}</span>
             </div>
             <div className="flex items-center">
               <Tag className="mr-2 h-4 w-4" />

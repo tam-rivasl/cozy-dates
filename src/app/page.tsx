@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, ClipboardList } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
+const today = new Date();
 const initialTasks: Task[] = [
   {
     id: '1',
     title: 'Movie Night: "La La Land"',
     description: 'Get popcorn, blankets, and enjoy a classic romantic movie at home.',
-    date: new Date(new Date().setDate(new Date().getDate() + 3)),
+    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3, 20, 30),
     category: 'Date Night',
     priority: 'Medium',
     completed: false,
@@ -23,7 +24,7 @@ const initialTasks: Task[] = [
     id: '2',
     title: 'Plan Summer Vacation',
     description: 'Research destinations in Italy. Look up flights and hotels.',
-    date: new Date(new Date().setDate(new Date().getDate() + 7)),
+    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7, 18, 0),
     category: 'Travel Plans',
     priority: 'High',
     completed: false,
@@ -32,7 +33,7 @@ const initialTasks: Task[] = [
     id: '3',
     title: 'Cook Dinner Together',
     description: 'Try that new pasta recipe we found.',
-    date: new Date(new Date().setDate(new Date().getDate() + 1)),
+    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 19, 0),
     category: 'To-Do',
     priority: 'Medium',
     completed: false,
@@ -41,7 +42,7 @@ const initialTasks: Task[] = [
     id: '4',
     title: 'Anniversary Dinner',
     description: 'Celebrate our 5th anniversary at the fancy restaurant downtown.',
-    date: new Date(new Date().setDate(new Date().getDate() - 30)),
+    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30, 19, 30),
     category: 'Special Event',
     priority: 'High',
     completed: true,
@@ -54,6 +55,15 @@ export default function Home() {
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const { toast } = useToast();
   const notificationTimeout = useRef<NodeJS.Timeout | null>(null);
+  const { upcomingTasks, completedTasks } = useMemo(() => {
+    const upcoming = tasks
+      .filter((task) => !task.completed)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    const completed = tasks
+      .filter((task) => task.completed)
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+    return { upcomingTasks: upcoming, completedTasks: completed };
+  }, [tasks]);
 
   useEffect(() => {
     // Register the service worker for PWA capabilities like notifications
@@ -69,7 +79,8 @@ export default function Home() {
         if (permission === 'granted' && upcomingTasks.length > 0) {
           const nextTask = upcomingTasks[0];
           const now = new Date().getTime();
-          const timeUntilNotification = nextTask.date.getTime() - now;
+          // Notify 1 hour before the event
+          const timeUntilNotification = nextTask.date.getTime() - now - (60 * 60 * 1000);
 
           if (notificationTimeout.current) {
             clearTimeout(notificationTimeout.current);
@@ -79,7 +90,7 @@ export default function Home() {
             notificationTimeout.current = setTimeout(() => {
               navigator.serviceWorker.ready.then(registration => {
                 registration.showNotification('Upcoming Plan Reminder!', {
-                  body: `Don't forget: ${nextTask.title}`,
+                  body: `Don't forget: "${nextTask.title}" is in one hour!`,
                   icon: '/icon-192x192.png',
                   vibrate: [200, 100, 200],
                 });
@@ -95,18 +106,8 @@ export default function Home() {
         clearTimeout(notificationTimeout.current);
       }
     };
-  }, [tasks]);
+  }, [tasks, upcomingTasks]);
 
-
-  const { upcomingTasks, completedTasks } = useMemo(() => {
-    const upcoming = tasks
-      .filter((task) => !task.completed)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-    const completed = tasks
-      .filter((task) => task.completed)
-      .sort((a, b) => b.date.getTime() - a.date.getTime());
-    return { upcomingTasks: upcoming, completedTasks: completed };
-  }, [tasks]);
 
   const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
     const taskWithId: Task = {
