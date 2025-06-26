@@ -5,7 +5,7 @@ import { useTasks } from '@/context/TaskContext';
 import { useUser } from '@/context/UserContext';
 import { Header } from '@/components/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Music, Loader2, ListMusic, CalendarDays, User, ExternalLink } from 'lucide-react';
+import { Music, Loader2, ListMusic, CalendarDays, User, ExternalLink, MessageSquareQuote } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -42,7 +42,7 @@ export default function MusicPage() {
             <main className="flex-1 p-4 md:p-8">
                 <div className="flex items-center gap-4 mb-6">
                     <Music className="h-10 w-10 text-primary" />
-                    <h1 className="text-3xl md:text-4xl font-headline">Our Shared Playlists</h1>
+                    <h1 className="text-3xl md:text-4xl font-headline">Musical Notes & Dedications</h1>
                 </div>
 
                 {tasksWithPlaylists.length > 0 ? (
@@ -63,7 +63,7 @@ export default function MusicPage() {
                                                     <div className="flex items-center">
                                                         <User className="mr-2 h-4 w-4" />
                                                         <div className="flex items-center gap-2">
-                                                            <span>Playlist by:</span>
+                                                            <span>Note from:</span>
                                                             <Avatar className="h-6 w-6">
                                                                 <AvatarImage src={creatorAvatarUrl} alt={task.createdBy} />
                                                                 <AvatarFallback>{task.createdBy.charAt(0)}</AvatarFallback>
@@ -81,6 +81,18 @@ export default function MusicPage() {
                                             </Button>
                                         </div>
                                     </CardHeader>
+                                    {task.notes && (
+                                      <CardContent>
+                                        <div className="border-l-4 border-accent pl-4 py-2 bg-accent/20 rounded-r-md">
+                                            <div className="flex items-start gap-3">
+                                                <MessageSquareQuote className="h-5 w-5 text-accent-foreground/60 mt-1 flex-shrink-0" />
+                                                <blockquote className="italic text-accent-foreground/90">
+                                                    "{task.notes}"
+                                                </blockquote>
+                                            </div>
+                                        </div>
+                                      </CardContent>
+                                    )}
                                 </Card>
                             );
                         })}
@@ -88,8 +100,8 @@ export default function MusicPage() {
                 ) : (
                     <div className="text-center py-20 px-6 bg-card rounded-lg shadow-sm mt-8">
                         <ListMusic className="mx-auto h-16 w-16 text-muted-foreground" />
-                        <p className="mt-4 text-muted-foreground text-lg">No playlists found yet.</p>
-                        <p className="mt-2 text-muted-foreground">Add a playlist link when you create a new plan to see it here!</p>
+                        <p className="mt-4 text-muted-foreground text-lg">No musical notes yet.</p>
+                        <p className="mt-2 text-muted-foreground">Add a note and a playlist link to a plan to see it here!</p>
                     </div>
                 )}
                  <Card className="mt-8 bg-accent/50 border-dashed">

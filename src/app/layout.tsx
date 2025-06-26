@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { UserProvider } from '@/context/UserContext';
 import { TaskProvider } from '@/context/TaskContext';
+import { WatchlistProvider } from '@/context/WatchlistContext';
 
 export const metadata: Metadata = {
   title: 'Cozy Dates',
@@ -26,8 +27,10 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <UserProvider>
           <TaskProvider>
-            {children}
-            <Toaster />
+            <WatchlistProvider>
+              {children}
+              <Toaster />
+            </WatchlistProvider>
           </TaskProvider>
         </UserProvider>
       </body>

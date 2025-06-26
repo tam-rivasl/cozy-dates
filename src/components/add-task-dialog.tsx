@@ -125,9 +125,9 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>A Little Note (Optional)</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="e.g., Remember to buy snacks, bring a blanket..." {...field} />
+                        <Textarea placeholder="e.g., Remember snacks, or write a sweet dedication..." {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -262,7 +262,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                   name="playlistUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Playlist Link (Optional)</FormLabel>
+                      <FormLabel>Dedicate a Playlist (Link)</FormLabel>
                       <FormControl>
                         <Input placeholder="https://open.spotify.com/..." {...field} />
                       </FormControl>

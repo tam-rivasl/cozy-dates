@@ -12,4 +12,13 @@ export interface Task {
   playlistUrl?: string;
 }
 
+export interface WatchlistItem {
+  id: string;
+  title: string;
+  type: 'Movie' | 'Series';
+  status: 'To Watch' | 'Watched';
+  addedBy: User;
+  notes?: string;
+}
+
 export type User = 'Tamara' | 'Carlos';
