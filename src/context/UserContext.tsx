@@ -1,0 +1,55 @@
+'use client';
+
+import type { User } from '@/lib/types';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+
+interface UserContextType {
+  user: User | null;
+  setUser: (user: User | null) => void;
+  theme: string;
+}
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+export function UserProvider({ children }: { children: ReactNode }) {
+  const [user, setUserState] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('cozy-user') as User | null;
+    }
+    return null;
+  });
+  
+  const [theme, setTheme] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('cozy-user', user);
+      const newTheme = `theme-${user.toLowerCase()}`;
+      setTheme(newTheme);
+      document.documentElement.className = '';
+      document.documentElement.classList.add(newTheme);
+    } else {
+      localStorage.removeItem('cozy-user');
+      setTheme('');
+      document.documentElement.className = '';
+    }
+  }, [user]);
+
+  const setUser = (newUser: User | null) => {
+    setUserState(newUser);
+  };
+  
+  return (
+    <UserContext.Provider value={{ user, setUser, theme }}>
+      {children}
+    </UserContext.Provider>
+  );
+}
+
+export function useUser() {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
+}

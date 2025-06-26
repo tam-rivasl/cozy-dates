@@ -7,3 +7,5 @@ export interface Task {
   priority: 'High' | 'Medium' | 'Low';
   completed: boolean;
 }
+
+export type User = 'Tamara' | 'Carlos';

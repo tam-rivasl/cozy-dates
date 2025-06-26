@@ -40,12 +40,16 @@ const taskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
   description: z.string().max(500, 'Description is too long').optional(),
   date: z.date({ required_error: 'A date is required.' }),
-  time: z.string({ required_error: 'A time is required.' }).regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.'),
+  hour: z.string({ required_error: 'An hour is required.' }),
+  minute: z.string({ required_error: 'A minute is required.' }),
   category: z.enum(['Date Night', 'Travel Plans', 'To-Do', 'Special Event']),
   priority: z.enum(['High', 'Medium', 'Low']),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
+
+const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
 export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialogProps) {
   const form = useForm<TaskFormValues>({
@@ -53,20 +57,19 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
     defaultValues: {
       title: '',
       description: '',
-      time: '19:00',
+      hour: '19',
+      minute: '00',
       category: 'Date Night',
       priority: 'Medium',
     },
   });
 
   const onSubmit = (data: TaskFormValues) => {
-    const [hours, minutes] = data.time.split(':').map(Number);
     const combinedDate = new Date(data.date);
-    combinedDate.setHours(hours, minutes);
+    combinedDate.setHours(parseInt(data.hour, 10), parseInt(data.minute, 10));
     
-    const { time, ...taskDetails } = data;
+    const { hour, minute, ...taskDetails } = data;
 
-    // The description can be undefined, but we need to pass a string
     const taskData = { ...taskDetails, date: combinedDate, description: data.description || ''};
     onAddTask(taskData);
     form.reset();
@@ -75,7 +78,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Add a New Plan</DialogTitle>
           <DialogDescription>
@@ -110,12 +113,12 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem className="flex flex-col col-span-3 sm:col-span-1">
                     <FormLabel>Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -146,19 +149,46 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask }: AddTaskDialog
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+               <FormField
+                  control={form.control}
+                  name="hour"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hour</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hour" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="minute"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minute</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Minute" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {minutes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
             <div className="grid grid-cols-2 gap-4">
                <FormField
