@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarDays, Tag, Flag, Trash2, User, Camera } from 'lucide-react';
+import { CalendarDays, Tag, Flag, Trash2, User, Camera, StickyNote, Music, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
@@ -86,9 +86,11 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
             <Trash2 className="h-5 w-5" />
           </Button>
         </div>
-        <CardDescription className={`${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-          {task.description}
-        </CardDescription>
+        {task.description && (
+          <CardDescription className={`pt-2 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
+            {task.description}
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
@@ -116,6 +118,31 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
               </div>
             </div>
           </div>
+
+          {(task.notes || task.playlistUrl) && (
+            <div className="space-y-4 pt-4 border-t">
+              {task.notes && (
+                  <div>
+                      <h4 className="flex items-center text-sm font-medium mb-1">
+                          <StickyNote className="mr-2 h-4 w-4 text-primary/80" />
+                          Notes
+                      </h4>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap pl-6">{task.notes}</p>
+                  </div>
+              )}
+              {task.playlistUrl && (
+                  <div>
+                      <h4 className="flex items-center text-sm font-medium mb-1">
+                          <Music className="mr-2 h-4 w-4 text-primary/80" />
+                          Playlist
+                      </h4>
+                       <a href={task.playlistUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline pl-6">
+                          Open Playlist <ExternalLink className="h-4 w-4" />
+                      </a>
+                  </div>
+              )}
+            </div>
+          )}
         
           {task.completed && (
             <div className="w-full pt-4 border-t">

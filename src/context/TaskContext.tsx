@@ -28,6 +28,8 @@ const initialTasks: Task[] = [
     completed: false,
     createdBy: 'Tamara',
     photos: [],
+    notes: 'Remember to buy the extra buttery popcorn!',
+    playlistUrl: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',
   },
   {
     id: '2',
@@ -39,6 +41,7 @@ const initialTasks: Task[] = [
     completed: false,
     createdBy: 'Carlos',
     photos: [],
+    notes: 'Focus on Tuscany region.',
   },
   {
     id: '3',
@@ -61,6 +64,7 @@ const initialTasks: Task[] = [
     completed: true,
     createdBy: 'Carlos',
     photos: ['https://placehold.co/600x400.png'],
+    playlistUrl: 'https://music.youtube.com/playlist?list=PL4fGSI1pDJn5kI81J1fYC0_B_k3qByOU5',
   },
 ];
 
@@ -75,7 +79,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     try {
       const storedTasks = localStorage.getItem('cozy-tasks');
       if (storedTasks) {
-        const parsedTasks = JSON.parse(storedTasks).map((task: Task) => ({
+        const parsedTasks = JSON.parse(storedTasks).map((task: any) => ({
             ...task,
             date: new Date(task.date),
         }));

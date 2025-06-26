@@ -8,6 +8,8 @@ export interface Task {
   completed: boolean;
   createdBy: User;
   photos?: string[];
+  notes?: string;
+  playlistUrl?: string;
 }
 
 export type User = 'Tamara' | 'Carlos';
