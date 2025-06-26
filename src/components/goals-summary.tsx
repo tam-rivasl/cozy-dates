@@ -60,21 +60,21 @@ export function GoalsSummary({ tasks }: GoalsSummaryProps) {
           <h3 className="text-sm font-medium mb-2 text-center">Idea Contribution</h3>
           <div className="space-y-3">
              <div className="flex justify-between items-center gap-4">
-               <span className="text-sm font-medium text-theme-tamara-primary">Tamara's Ideas</span>
+               <span className="text-sm font-medium text-tamara">Tamara's Ideas</span>
                <span className="text-sm font-bold">{tamaraIdeaCount}</span>
              </div>
              <div className="flex justify-between items-center gap-4">
-               <span className="text-sm font-medium text-theme-carlos-primary">Carlos's Ideas</span>
+               <span className="text-sm font-medium text-carlos">Carlos's Ideas</span>
                <span className="text-sm font-bold">{carlosIdeaCount}</span>
              </div>
           </div>
            <div className="mt-2 w-full h-4 rounded-full flex overflow-hidden bg-muted">
               <div
-                className="h-full bg-primary transition-all duration-500"
+                className="h-full bg-tamara transition-all duration-500"
                 style={{ width: `${tamaraProgress}%` }}
               />
               <div
-                className="h-full bg-secondary transition-all duration-500"
+                className="h-full bg-carlos transition-all duration-500"
                 style={{ width: `${carlosProgress}%` }}
               />
             </div>

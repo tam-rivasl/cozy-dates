@@ -65,6 +65,8 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        tamara: 'hsl(var(--tamara-color))',
+        carlos: 'hsl(var(--carlos-color))',
       },
       borderRadius: {
         lg: 'var(--radius)',
