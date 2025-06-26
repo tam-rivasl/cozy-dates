@@ -6,7 +6,7 @@ import { Header } from '@/components/header';
 import { AddTaskDialog } from '@/components/add-task-dialog';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ClipboardList } from 'lucide-react';
+import { PlusCircle, ClipboardList, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
@@ -55,14 +55,14 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [user, isLoading, router]);
 
   const { upcomingTasks, completedTasks } = useMemo(() => {
     const upcoming = tasks
@@ -104,6 +104,14 @@ export default function DashboardPage() {
       variant: "destructive"
     })
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
   
   // Render nothing or a loader while redirecting
   if (!user) {
