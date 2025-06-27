@@ -15,6 +15,7 @@ export const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
+  // Store the current theme CSS class (e.g. "theme-tamara")
   const [theme, setThemeState] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,10 +54,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     if (typeof document !== 'undefined') {
       document.documentElement.classList.remove('theme-tamara', 'theme-carlos');
-      if (theme === 'tamara') {
-        document.documentElement.classList.add('theme-tamara');
-      } else if (theme === 'carlos') {
-        document.documentElement.classList.add('theme-carlos');
+      if (theme) {
+        document.documentElement.classList.add(theme);
       }
     }
   }, [theme]);

@@ -26,7 +26,7 @@ export default function LoginPage() {
     // Set the selected user in the context
     setUser(user);
     // Apply the corresponding theme
-    setTheme(user.toLowerCase());
+    setTheme(`theme-${user.toLowerCase()}`);
     // Redirect the user to the dashboard page
     router.push('/dashboard');
   };
