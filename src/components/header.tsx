@@ -27,6 +27,7 @@ export function Header() {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
+    // Clearing the user will also reset the theme via context
     setUser(null);
     router.push('/');
   };
