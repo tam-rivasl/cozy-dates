@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { ThemeToggle } from './theme-toggle';
 
 
 export function Header() {
@@ -81,6 +82,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -6,7 +6,6 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
-  theme: string;
   isLoading: boolean;
 }
 
@@ -14,8 +13,7 @@ export const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
-  const [theme, setTheme] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     try {
@@ -23,29 +21,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (storedUser) {
         setUserState(storedUser);
       }
-
-      const storedTheme = localStorage.getItem('cozy-theme');
-      if (storedTheme) {
-        setTheme(storedTheme);
-      } else {
-        setTheme('light'); // Default theme
-      }
     } catch (e) {
       // localStorage is not available
+    } finally {
+        setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('cozy-user', user);
-    } else {
-      localStorage.removeItem('cozy-user');
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (theme) {
-      localStorage.setItem('cozy-theme', theme);
+    if(!isLoading) {
+      try {
+        if (user) {
+          localStorage.setItem('cozy-user', user);
+        } else {
+          localStorage.removeItem('cozy-user');
+        }
+      } catch (e) {
+        // LocalStorage not available
+      }
     }
   }, [user, isLoading]);
 
@@ -54,7 +47,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
   
   return (
-    <UserContext.Provider value={{ user, setUser, theme, isLoading }}>
+    <UserContext.Provider value={{ user, setUser, isLoading }}>
       {children}
     </UserContext.Provider>
   );
