@@ -2,7 +2,6 @@
 
 import type { WatchlistItem } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,12 +9,11 @@ import { Trash2, User as UserIcon, Clapperboard, Tv, StickyNote, CalendarPlus } 
 
 interface WatchlistItemCardProps {
   item: WatchlistItem;
-  onToggleStatus: (id: string) => void;
   onDelete: (id: string) => void;
   onPlanMovieNight: (item: WatchlistItem) => void;
 }
 
-export function WatchlistItemCard({ item, onToggleStatus, onDelete, onPlanMovieNight }: WatchlistItemCardProps) {
+export function WatchlistItemCard({ item, onDelete, onPlanMovieNight }: WatchlistItemCardProps) {
   const creatorAvatarUrl = item.addedBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
   const isWatched = item.status === 'Watched';
 
@@ -24,13 +22,6 @@ export function WatchlistItemCard({ item, onToggleStatus, onDelete, onPlanMovieN
       <CardHeader>
         <div className="flex justify-between items-start gap-4">
           <div className="flex items-center space-x-3">
-             <Checkbox
-                id={`item-${item.id}`}
-                checked={isWatched}
-                onCheckedChange={() => onToggleStatus(item.id)}
-                aria-label={`Mark "${item.title}" as ${isWatched ? 'to watch' : 'watched'}`}
-                className="w-6 h-6"
-              />
             <CardTitle className={`text-xl font-headline ${isWatched ? 'line-through text-muted-foreground' : ''}`}>
               {item.title}
             </CardTitle>

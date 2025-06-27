@@ -46,10 +46,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.classList.remove('dark'); // Remove dark theme as user themes take precedence
 
+    let themeClass = '';
     if (user === 'Carlos') {
+      themeClass = 'theme-carlos';
       root.classList.add('theme-carlos');
       root.classList.remove('theme-tamara');
     } else if (user === 'Tamara') {
+      themeClass = 'theme-tamara';
       root.classList.add('theme-tamara');
       root.classList.remove('theme-carlos');
     } else {
@@ -57,6 +60,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       root.classList.remove('theme-carlos');
       root.classList.remove('theme-tamara');
     }
+    console.log(`User: ${user}, Theme applied: ${themeClass || 'default'}`);
   }, [user]);
 
   const setUser = (newUser: User | null) => {

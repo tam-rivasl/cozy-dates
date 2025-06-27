@@ -15,7 +15,7 @@ import { AddTaskDialog } from '@/components/add-task-dialog';
 
 export default function WatchlistPage() {
     const { user, isLoading: isUserLoading } = useUser();
-    const { watchlistItems, isLoading: areItemsLoading, addWatchlistItem, toggleStatus, deleteWatchlistItem } = useWatchlist();
+    const { watchlistItems, isLoading: areItemsLoading, addWatchlistItem, deleteWatchlistItem } = useWatchlist();
     const { addTask } = useTasks();
     const router = useRouter();
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
@@ -92,7 +92,6 @@ export default function WatchlistPage() {
                                     <WatchlistItemCard
                                         key={item.id}
                                         item={item}
-                                        onToggleStatus={toggleStatus}
                                         onDelete={deleteWatchlistItem}
                                         onPlanMovieNight={handlePlanMovieNight}
                                     />
@@ -113,7 +112,6 @@ export default function WatchlistPage() {
                                     <WatchlistItemCard
                                         key={item.id}
                                         item={item}
-                                        onToggleStatus={toggleStatus}
                                         onDelete={deleteWatchlistItem}
                                         onPlanMovieNight={handlePlanMovieNight}
                                     />
