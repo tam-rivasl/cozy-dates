@@ -1,6 +1,5 @@
 @tailwind base;
-@tailwind components;
-@tailwind utilities;
+
 
 @layer base {
   :root {
@@ -56,51 +55,79 @@
   }
 
   .theme-tamara {
-    --background: 345 100% 97%;
-    --foreground: 345 15% 25%;
+    /* Fondo muy suave, casi blanco rosado */
+    --background: 345 100% 99%;
+  
+    /* Texto principal en gris suave, sin toques cafés */
+    --foreground: 210 10% 20%;
+  
+    /* Tarjetas y popovers con fondo blanco rosado */
     --card: 345 100% 99%;
-    --card-foreground: 345 15% 25%;
+    --card-foreground: 210 10% 20%;
     --popover: 345 100% 99%;
-    --popover-foreground: 345 15% 25%;
-    --primary: 340 85% 80%;       /* Rosado Pastel */
-    --primary-foreground: 340 20% 15%;
-    --secondary: 280 80% 92%;      /* Lila/Morado Pastel */
-    --secondary-foreground: 280 15% 25%;
-    --muted: 345 20% 94%;
-    --muted-foreground: 345 10% 45%;
-    --accent: 210 100% 90%;       /* Celeste Pastel */
-    --accent-foreground: 210 20% 20%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 345 40% 92%;
-    --input: 345 40% 92%;
-    --ring: 340 85% 80%;
+    --popover-foreground: 210 10% 20%;
+  
+    /* Botón principal: rosa pastel ligero */
+    --primary: 340 60% 90%;
+    --primary-foreground: 340 20% 25%;
+  
+    /* Segundo botón: lila pastel muy suave */
+    --secondary: 280 50% 94%;
+    --secondary-foreground: 280 20% 30%;
+  
+    /* Elementos atenuados: gris rosado pálido */
+    --muted: 345 20% 96%;
+    --muted-foreground: 210 10% 40%;
+  
+    /* Acento: celeste pastel clarito */
+    --accent: 210 60% 90%;
+    --accent-foreground: 210 30% 30%;
+  
+    /* Alertas y destructivos en coral pastel */
+    --destructive: 5 70% 80%;
+    --destructive-foreground: 5 30% 20%;
+  
+    /* Bordes e inputs: gris muy pálido */
+    --border: 210 10% 90%;
+    --input: 210 10% 90%;
+    --ring: 340 60% 90%;
   }
+  
 
   .theme-carlos {
-    --background: 35 30% 94%;     /* Light Cafe/Beige */
-    --foreground: 25 20% 10%;      /* Negro/Dark brown */
-    --card: 35 30% 99%;
-    --card-foreground: 25 20% 10%;
-    --popover: 35 30% 99%;
-    --popover-foreground: 25 20% 10%;
-    --primary: 120 30% 35%;        /* Verde */
-    --primary-foreground: 120 15% 95%;
-    --secondary: 30 40% 55%;       /* Cafe */
-    --secondary-foreground: 30 15% 95%;
-    --muted: 35 25% 90%;
-    --muted-foreground: 35 10% 45%;
-    --accent: 35 25% 88%;        /* Lighter cafe for accents */
-    --accent-foreground: 25 15% 20%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 35 20% 85%;
-    --input: 35 20% 85%;
-    --ring: 120 30% 35%;
-  }
-}
-
-@layer base {
+    /* Fondo principal: casi negro, pero evitando el 100% puro para matizar sombras */
+    --background: 0 0% 5%;
+  
+    /* Texto principal: tono café claro para buen contraste sobre fondo oscuro */
+    --foreground: 30 30% 85%;
+  
+    /* Encabezados y textos destacados dentro de tarjetas y popovers */
+    --card-foreground: 30 30% 90%;
+    --popover-foreground: 30 30% 90%;
+    --secondary-foreground: 30 25% 70%;
+    --muted-foreground: 0 0% 60%;
+    --accent-foreground: 210 50% 95%;
+  
+    /* Fondo de tarjetas y popovers: matices de gris para diferenciar secciones */
+    --card: 0 0% 12%;
+    --popover: 0 0% 15%;
+    --secondary: 210 30% 20%;
+    --muted: 0 0% 25%;
+    --accent: 210 40% 30%;
+  
+    /* Botones principales en verde más suave y menos saturado */
+    --primary: 120 40% 50%;
+    --primary-foreground: 0 0% 100%;
+  
+    /* Alertas y elementos destructivos en rojo oscuro */
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+  
+    /* Bordes e inputs: gris medio */
+    --border: 0 0% 40%;
+    --input: 0 0% 40%;
+    --ring: 120 40% 50%;
+  }  
   * {
     @apply border-border;
   }
@@ -108,3 +135,6 @@
     @apply bg-background text-foreground;
   }
 }
+
+  @tailwind components;
+  @tailwind utilities;
