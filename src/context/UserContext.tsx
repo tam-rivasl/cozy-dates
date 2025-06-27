@@ -42,6 +42,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isLoading]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark'); // Remove dark theme as user themes take precedence
+
+    if (user === 'Carlos') {
+      root.classList.add('theme-carlos');
+      root.classList.remove('theme-tamara');
+    } else if (user === 'Tamara') {
+      root.classList.add('theme-tamara');
+      root.classList.remove('theme-carlos');
+    } else {
+      // Fallback to default when no user is selected
+      root.classList.remove('theme-carlos');
+      root.classList.remove('theme-tamara');
+    }
+  }, [user]);
+
   const setUser = (newUser: User | null) => {
     setUserState(newUser);
   };
