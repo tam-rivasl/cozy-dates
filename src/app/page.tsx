@@ -16,17 +16,16 @@ import { motion } from 'framer-motion';
 
 // Define the LoginPage functional component
 export default function LoginPage() {
-  // Destructure setUser and setTheme from the useUser context hook
-  const { setUser, setTheme } = useUser();
+  // Access the user context to update the current user
+  const { setUser } = useUser();
   // Initialize the router hook
   const router = useRouter();
 
   // Define a function to handle user selection
   const handleUserSelect = (user: User) => {
-    // Set the selected user in the context
+    // Set the selected user in the context; the theme will
+    // automatically update based on the user value
     setUser(user);
-    // Apply the corresponding theme
-    setTheme(`theme-${user.toLowerCase()}`);
     // Redirect the user to the dashboard page
     router.push('/dashboard');
   };

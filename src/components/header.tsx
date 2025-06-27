@@ -21,14 +21,14 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 
 export function Header() {
-  const { user, setUser, setTheme } = useUser();
+  const { user, setUser } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
+    // Clearing the user will also reset the theme via context
     setUser(null);
-    setTheme('');
     router.push('/');
   };
 

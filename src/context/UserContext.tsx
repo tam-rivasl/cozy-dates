@@ -7,7 +7,6 @@ interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   theme: string;
-  setTheme: (theme: string) => void;
   isLoading: boolean;
 }
 
@@ -26,12 +25,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUserState(storedUser);
       }
 
-      const storedTheme = localStorage.getItem('cozy-theme');
-      if (storedTheme) {
-        setThemeState(storedTheme);
-      } else {
-        setThemeState(''); // Default no theme
-      }
     } catch (e) {
       // localStorage is not available
     }
@@ -45,13 +38,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Automatically sync the theme with the current user
   useEffect(() => {
-    if (theme) {
-      localStorage.setItem('cozy-theme', theme);
+    if (user) {
+      setThemeState(`theme-${user.toLowerCase()}`);
     } else {
-      localStorage.removeItem('cozy-theme');
+      setThemeState('');
     }
+  }, [user]);
 
+  useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.classList.remove('theme-tamara', 'theme-carlos');
       if (theme) {
@@ -64,12 +60,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUserState(newUser);
   };
 
-  const setTheme = (newTheme: string) => {
-    setThemeState(newTheme);
-  };
-  
   return (
-    <UserContext.Provider value={{ user, setUser, theme, setTheme, isLoading }}>
+    <UserContext.Provider value={{ user, setUser, theme, isLoading }}>
       {children}
     </UserContext.Provider>
   );
