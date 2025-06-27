@@ -16,8 +16,8 @@ import { motion } from 'framer-motion';
 
 // Define the LoginPage functional component
 export default function LoginPage() {
-  // Destructure setUser from the useUser context hook
-  const { setUser } = useUser();
+  // Destructure setUser and setTheme from the useUser context hook
+  const { setUser, setTheme } = useUser();
   // Initialize the router hook
   const router = useRouter();
 
@@ -25,6 +25,8 @@ export default function LoginPage() {
   const handleUserSelect = (user: User) => {
     // Set the selected user in the context
     setUser(user);
+    // Apply the corresponding theme
+    setTheme(user.toLowerCase());
     // Redirect the user to the dashboard page
     router.push('/dashboard');
   };

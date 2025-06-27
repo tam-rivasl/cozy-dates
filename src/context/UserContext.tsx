@@ -7,6 +7,7 @@ interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   theme: string;
+  setTheme: (theme: string) => void;
   isLoading: boolean;
 }
 
@@ -14,7 +15,7 @@ export const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
-  const [theme, setTheme] = useState('');
+  const [theme, setThemeState] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -26,9 +27,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       const storedTheme = localStorage.getItem('cozy-theme');
       if (storedTheme) {
-        setTheme(storedTheme);
+        setThemeState(storedTheme);
       } else {
-        setTheme('light'); // Default theme
+        setThemeState(''); // Default no theme
       }
     } catch (e) {
       // localStorage is not available
@@ -46,15 +47,30 @@ export function UserProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (theme) {
       localStorage.setItem('cozy-theme', theme);
+    } else {
+      localStorage.removeItem('cozy-theme');
     }
-  }, [user, isLoading]);
+
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.remove('theme-tamara', 'theme-carlos');
+      if (theme === 'tamara') {
+        document.documentElement.classList.add('theme-tamara');
+      } else if (theme === 'carlos') {
+        document.documentElement.classList.add('theme-carlos');
+      }
+    }
+  }, [theme]);
 
   const setUser = (newUser: User | null) => {
     setUserState(newUser);
   };
+
+  const setTheme = (newTheme: string) => {
+    setThemeState(newTheme);
+  };
   
   return (
-    <UserContext.Provider value={{ user, setUser, theme, isLoading }}>
+    <UserContext.Provider value={{ user, setUser, theme, setTheme, isLoading }}>
       {children}
     </UserContext.Provider>
   );

@@ -21,13 +21,14 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 
 export function Header() {
-  const { user, setUser } = useUser();
+  const { user, setUser, setTheme } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     setUser(null);
+    setTheme('');
     router.push('/');
   };
 
