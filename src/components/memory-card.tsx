@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { Button } from './ui/button';
 
 export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: string) => void }) {
-  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/tamara.svg' : '/carlos.svg';
+  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/tamara.svg' : '/carlos.jpg';
 
   return (
     <Card className="overflow-hidden">

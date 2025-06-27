@@ -66,7 +66,7 @@ export default function LoginPage() {
             {/* Card content for Carlos */}
             <CardContent className="flex flex-col items-center p-6">
               <Avatar className="w-32 h-32 mb-4 border-4 border-transparent group-hover:border-primary transition-all">
-                <AvatarImage src="/carlos.svg" alt="Carlos" />
+                <AvatarImage src="/carlos.jpg" alt="Carlos" />
                 <AvatarFallback>C</AvatarFallback>
               </Avatar>
               <h2 className="text-2xl font-headline font-bold">Carlos</h2>

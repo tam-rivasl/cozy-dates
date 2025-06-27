@@ -33,7 +33,7 @@ export function Header() {
 
   const avatarUrl = user === 'Tamara' 
     ? "/tamara.svg" 
-    : "/carlos.svg";
+    : "/carlos.jpg";
   
   const navLinks = [
     { href: '/dashboard', label: 'Home', icon: Home },
