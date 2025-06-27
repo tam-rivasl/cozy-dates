@@ -59,7 +59,7 @@ export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: stri
                       src={photo} 
                       alt={`Memory photo ${index + 1}`}
                       fill
-                      className="rounded-lg object-cover"
+                      className="rounded-lg object-contain"
                     />
                   </div>
                 </CarouselItem>
