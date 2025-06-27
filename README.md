@@ -1,5 +1,19 @@
-# Firebase Studio
+# Goals and Memories App
 
-This is a NextJS starter in Firebase Studio.
+This is a web application built with Next.js and Firebase that helps users track their personal goals, manage tasks, and create memories.
 
-To get started, take a look at src/app/page.tsx.
+## Features
+
+* Goal tracking
+* Task management
+* Memory creation and storage
+* User authentication with Firebase Authentication
+* Data storage with Firebase Firestore
+
+## Installation
+
+1. Clone the repository.
+2. Install dependencies using `npm install`.
+3. Set up a Firebase project and configure the application with your Firebase project details.
+4. Run the development server using `npm run dev`.
+

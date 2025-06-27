@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import type { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -69,17 +70,30 @@ export function GoalsSummary({ tasks }: GoalsSummaryProps) {
              </div>
           </div>
            <div className="mt-2 w-full h-4 rounded-full flex overflow-hidden bg-muted">
-              <div
-                className="h-full bg-tamara transition-all duration-500"
-                style={{ width: `${tamaraProgress}%` }}
-              />
-              <div
-                className="h-full bg-carlos transition-all duration-500"
-                style={{ width: `${carlosProgress}%` }}
-              />
-            </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+             {/* Container for the progress bars and names with relative positioning */}
+             <div className="relative w-full h-4 flex">
+                {/* Tamara's Progress Bar */}
+                <div
+                  className="h-full bg-tamara transition-all duration-500 relative flex justify-center items-center"
+                  style={{ width: `${tamaraProgress}%` }}
+                >
+                  {/* Tamara's Name */}
+                  <span className="absolute bottom-full mb-1 text-xs font-bold text-tamara">
+                    Tamara
+                  </span>
+                </div>
+                {/* Carlos's Progress Bar */}
+                <div
+                  className="h-full bg-carlos transition-all duration-500 relative flex justify-center items-center"
+                  style={{ width: `${carlosProgress}%` }}
+                >
+                   {/* Carlos's Name */}
+                   <span className="absolute bottom-full mb-1 text-xs font-bold text-carlos">Carlos</span>
+                </div>
+             </div>
+           </div>
+ </div>
+ </CardContent>
+ </Card>
+ );
 }
