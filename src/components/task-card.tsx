@@ -26,7 +26,7 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
     Low: 'bg-green-500/80 hover:bg-green-500',
   };
 
-  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/tamara.svg' : '/carlos.jpg';
+  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 

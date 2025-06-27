@@ -12,7 +12,7 @@ interface MusicNoteCardProps {
 }
 
 export function MusicNoteCard({ note, onDelete }: MusicNoteCardProps) {
-  const creatorAvatarUrl = note.addedBy === 'Tamara' ? '/tamara.svg' : '/carlos.jpg';
+  const creatorAvatarUrl = note.addedBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
 
   return (
     <Card>

@@ -16,7 +16,7 @@ interface WatchlistItemCardProps {
 }
 
 export function WatchlistItemCard({ item, onToggleStatus, onDelete, onPlanMovieNight }: WatchlistItemCardProps) {
-  const creatorAvatarUrl = item.addedBy === 'Tamara' ? '/tamara.svg' : '/carlos.jpg';
+  const creatorAvatarUrl = item.addedBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
   const isWatched = item.status === 'Watched';
 
   return (

@@ -32,8 +32,8 @@ export function Header() {
   };
 
   const avatarUrl = user === 'Tamara' 
-    ? "/tamara.svg" 
-    : "/carlos.jpg";
+    ? "/img/tamara.png" 
+    : "/img/carlos.png";
   
   const navLinks = [
     { href: '/dashboard', label: 'Home', icon: Home },
