@@ -55,42 +55,42 @@
   }
 
   .theme-tamara {
-    /* Fondo muy suave, casi blanco rosado */
-    --background: 345 100% 99%;
+    /* Fondo: Celeste pastel muy claro */
+    --background: 210 60% 96%;
   
-    /* Texto principal en gris suave, sin toques cafés */
-    --foreground: 210 10% 20%;
+    /* Texto principal: Tono suave para buena legibilidad */
+    --foreground: 270 20% 35%;
   
-    /* Tarjetas y popovers con fondo blanco rosado */
-    --card: 345 100% 99%;
-    --card-foreground: 210 10% 20%;
-    --popover: 345 100% 99%;
-    --popover-foreground: 210 10% 20%;
+    /* Tarjetas y popovers: Morado pastel claro */
+    --card: 270 50% 93%;
+    --card-foreground: 270 20% 35%;
+    --popover: 270 50% 93%;
+    --popover-foreground: 270 20% 35%;
   
-    /* Botón principal: rosa pastel ligero */
-    --primary: 340 60% 90%;
-    --primary-foreground: 340 20% 25%;
+    /* Botón principal: Rosa pastel */
+    --primary: 340 60% 85%;
+    --primary-foreground: 340 20% 20%;
   
-    /* Segundo botón: lila pastel muy suave */
-    --secondary: 280 50% 94%;
+    /* Segundo botón: Lila pastel */
+    --secondary: 280 50% 90%;
     --secondary-foreground: 280 20% 30%;
   
-    /* Elementos atenuados: gris rosado pálido */
-    --muted: 345 20% 96%;
-    --muted-foreground: 210 10% 40%;
+    /* Elementos atenuados: Tono intermedio entre celeste y morado */
+    --muted: 240 40% 92%;
+    --muted-foreground: 240 20% 50%;
   
-    /* Acento: celeste pastel clarito */
-    --accent: 210 60% 90%;
-    --accent-foreground: 210 30% 30%;
+    /* Acento: Morado pastel claro */
+    --accent: 270 60% 85%;
+    --accent-foreground: 270 20% 25%;
   
-    /* Alertas y destructivos en coral pastel */
-    --destructive: 5 70% 80%;
-    --destructive-foreground: 5 30% 20%;
-  
-    /* Bordes e inputs: gris muy pálido */
-    --border: 210 10% 90%;
-    --input: 210 10% 90%;
-    --ring: 340 60% 90%;
+    /* Alertas y destructivos: Salmón pastel */
+    --destructive: 10 70% 80%;
+    --destructive-foreground: 10 30% 20%;
+
+    /* Bordes e inputs: Tono pastel suave */
+    --border: 240 20% 88%;
+    --input: 240 20% 88%;
+    --ring: 340 60% 85%;
   }
   
 
