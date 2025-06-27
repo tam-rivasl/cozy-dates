@@ -1,4 +1,19 @@
-<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="128" height="128" rx="64" fill="#606C38"/>
-<text fill="#FEFAE0" xml:space="preserve" style="white-space: pre" font-family="Alegreya, serif" font-size="80" font-weight="bold" letter-spacing="0em"><tspan x="36.3281" y="90">C</tspan></text>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" fill="#f0e6d1"/>
+  <g transform="translate(0, 30)">
+    <path d="M40,120 C40,100 216,100 216,120 L216,226 L40,226Z" fill="#3a5355"/>
+    <rect x="108" y="110" width="40" height="30" fill="#f2cbaf"/>
+    <circle cx="128" cy="80" r="55" fill="#f2cbaf"/>
+    <path d="M78,80 q20,-40 50,-35 t50,35 q-5,10 -10,15 l-5,-10 -10,10 -10,-15 -10,15 -10,-15 -10,10 -5,-10 q-5,-5 -10,-15z" fill="#3d3531"/>
+    <g stroke="#3d3531" stroke-width="7" fill="none">
+        <circle cx="103" cy="83" r="16"/>
+        <circle cx="153" cy="83" r="16"/>
+        <line x1="119" y1="83" x2="137" y2="83"/>
+    </g>
+    <circle cx="103" cy="83" r="4" fill="#3d3531"/>
+    <circle cx="153" cy="83" r="4" fill="#3d3531"/>
+    <path d="M120,105 Q128,112 136,105" stroke="#3d3531" stroke-width="2" fill="none"/>
+    <path d="M112,102 C120,98 136,98 144,102 C136,106 120,106 112,102Z" fill="#3d3531"/>
+    <path d="M122,115 L134,115 L128,125Z" fill="#3d3531"/>
+  </g>
 </svg>
