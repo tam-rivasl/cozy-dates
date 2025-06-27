@@ -4,6 +4,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import type { MusicNote } from '@/lib/types';
 import { useUser } from '@/context/UserContext';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/lib/supabaseClient';
 
 interface MusicContextType {
   musicNotes: MusicNote[];
@@ -38,31 +39,20 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedNotes = localStorage.getItem('cozy-music-notes');
-      if (storedNotes) {
-        setMusicNotes(JSON.parse(storedNotes));
-      } else {
+    async function load() {
+      const { data, error } = await supabase.from('music_notes').select('*');
+      if (error) {
+        console.error('Failed to load music notes', error);
         setMusicNotes(initialMusicNotes);
+      } else {
+        setMusicNotes(data as MusicNote[]);
       }
-    } catch (e) {
-      setMusicNotes(initialMusicNotes);
-    } finally {
       setIsLoading(false);
     }
+    load();
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      try {
-        localStorage.setItem('cozy-music-notes', JSON.stringify(musicNotes));
-      } catch (e) {
-        // LocalStorage not available
-      }
-    }
-  }, [musicNotes, isLoading]);
-
-  const addMusicNote = (note: Omit<MusicNote, 'id' | 'addedBy'>) => {
+  const addMusicNote = async (note: Omit<MusicNote, 'id' | 'addedBy'>) => {
     if (!user) return;
     const newNote: MusicNote = {
       ...note,
@@ -70,14 +60,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       addedBy: user,
     };
     setMusicNotes((prev) => [newNote, ...prev]);
+    await supabase.from('music_notes').insert(newNote);
     toast({
       title: "Dedication Added!",
       description: `Your musical note "${newNote.title}" has been shared.`,
     })
   };
 
-  const deleteMusicNote = (noteId: string) => {
+  const deleteMusicNote = async (noteId: string) => {
     setMusicNotes((prev) => prev.filter((note) => note.id !== noteId));
+    await supabase.from('music_notes').delete().eq('id', noteId);
      toast({
       title: "Dedication Removed",
       description: "The musical note has been deleted.",

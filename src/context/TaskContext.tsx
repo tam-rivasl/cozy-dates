@@ -5,6 +5,7 @@ import type { Task } from '@/lib/types';
 import { useUser } from '@/context/UserContext';
 import { useToast } from "@/hooks/use-toast";
 import { useWatchlist } from './WatchlistContext';
+import { supabase } from '@/lib/supabaseClient';
 
 interface TaskContextType {
   tasks: Task[];
@@ -76,36 +77,23 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { markAsWatched } = useWatchlist();
 
   useEffect(() => {
-    setIsLoading(true);
-    try {
-      const storedTasks = localStorage.getItem('cozy-tasks');
-      if (storedTasks) {
-        const parsedTasks = JSON.parse(storedTasks).map((task: any) => ({
-            ...task,
-            date: new Date(task.date),
-        }));
-        setTasks(parsedTasks);
-      } else {
+    async function load() {
+      setIsLoading(true);
+      const { data, error } = await supabase.from('tasks').select('*');
+      if (error) {
+        console.error('Failed to load tasks', error);
         setTasks(initialTasks);
+      } else {
+        const parsed = data.map((t: any) => ({ ...t, date: new Date(t.date) }));
+        setTasks(parsed);
       }
-    } catch (e) {
-      setTasks(initialTasks);
-    } finally {
       setIsLoading(false);
     }
+    load();
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      try {
-        localStorage.setItem('cozy-tasks', JSON.stringify(tasks));
-      } catch (e) {
-        // LocalStorage not available
-      }
-    }
-  }, [tasks, isLoading]);
 
-  const addTask = (newTask: Omit<Task, 'id' | 'completed' | 'createdBy' | 'photos'>) => {
+  const addTask = async (newTask: Omit<Task, 'id' | 'completed' | 'createdBy' | 'photos'>) => {
     if (!user) return;
     const taskWithId: Task = {
       ...newTask,
@@ -115,14 +103,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       photos: [],
     };
     setTasks((prev) => [taskWithId, ...prev]);
+    await supabase.from('tasks').insert(taskWithId);
     toast({
       title: "Task Added!",
       description: `"${newTask.title}" has been added to your list.`,
     });
   };
 
-  const toggleComplete = (taskId: string) => {
-     const taskToUpdate = tasks.find((task) => task.id === taskId);
+  const toggleComplete = async (taskId: string) => {
+    const taskToUpdate = tasks.find((task) => task.id === taskId);
 
     if (taskToUpdate && !taskToUpdate.completed && taskToUpdate.watchlistItemId) {
       markAsWatched(taskToUpdate.watchlistItemId);
@@ -133,10 +122,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         task.id === taskId ? { ...task, completed: !task.completed } : task
       )
     );
+
+    await supabase
+      .from('tasks')
+      .update({ completed: !taskToUpdate?.completed })
+      .eq('id', taskId);
   };
 
-  const deleteTask = (taskId: string) => {
+  const deleteTask = async (taskId: string) => {
     setTasks((prev) => prev.filter((task) => task.id !== taskId));
+    await supabase.from('tasks').delete().eq('id', taskId);
     toast({
       title: "Task Removed",
       description: "The task has been deleted.",
@@ -144,7 +139,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addPhoto = (taskId: string, photoDataUri: string) => {
+  const addPhoto = async (taskId: string, photoDataUri: string) => {
     setTasks(prev => {
       const newTasks = prev.map(task => {
         if (task.id === taskId) {
@@ -152,11 +147,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
         return task;
       });
-       toast({
-        title: "Memory Added!",
-        description: "A new photo has been added to your plan.",
-      });
       return newTasks;
+    });
+    const task = tasks.find(t => t.id === taskId);
+    const photos = task ? [...(task.photos || []), photoDataUri] : [photoDataUri];
+    await supabase.from('tasks').update({ photos }).eq('id', taskId);
+    toast({
+      title: "Memory Added!",
+      description: "A new photo has been added to your plan.",
     });
   };
   

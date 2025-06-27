@@ -4,6 +4,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import type { WatchlistItem, User } from '@/lib/types';
 import { useUser } from '@/context/UserContext';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/lib/supabaseClient';
 
 interface WatchlistContextType {
   watchlistItems: WatchlistItem[];
@@ -28,31 +29,20 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedItems = localStorage.getItem('cozy-watchlist');
-      if (storedItems) {
-        setWatchlistItems(JSON.parse(storedItems));
-      } else {
+    async function load() {
+      const { data, error } = await supabase.from('watchlist_items').select('*');
+      if (error) {
+        console.error('Failed to load watchlist', error);
         setWatchlistItems(initialItems);
+      } else {
+        setWatchlistItems(data as WatchlistItem[]);
       }
-    } catch (e) {
-      setWatchlistItems(initialItems);
-    } finally {
       setIsLoading(false);
     }
+    load();
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      try {
-        localStorage.setItem('cozy-watchlist', JSON.stringify(watchlistItems));
-      } catch (e) {
-        // LocalStorage not available
-      }
-    }
-  }, [watchlistItems, isLoading]);
-
-  const addWatchlistItem = (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => {
+  const addWatchlistItem = async (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => {
     if (!user) return;
     const newItem: WatchlistItem = {
       ...item,
@@ -61,13 +51,14 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       addedBy: user,
     };
     setWatchlistItems((prev) => [newItem, ...prev]);
+    await supabase.from('watchlist_items').insert(newItem);
     toast({
       title: "Added to Watchlist!",
       description: `"${newItem.title}" is ready to be watched.`,
     })
   };
 
-  const markAsWatched = (itemId: string) => {
+  const markAsWatched = async (itemId: string) => {
     setWatchlistItems((prev) =>
       prev.map((item) =>
         item.id === itemId && item.status === 'To Watch'
@@ -75,10 +66,15 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
           : item
       )
     );
+    await supabase
+      .from('watchlist_items')
+      .update({ status: 'Watched' })
+      .eq('id', itemId);
   };
 
-  const deleteWatchlistItem = (itemId: string) => {
+  const deleteWatchlistItem = async (itemId: string) => {
     setWatchlistItems((prev) => prev.filter((item) => item.id !== itemId));
+    await supabase.from('watchlist_items').delete().eq('id', itemId);
      toast({
       title: "Item Removed",
       description: "The item has been removed from your watchlist.",
