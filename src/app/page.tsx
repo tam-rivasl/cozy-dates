@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
-import type { User } from '@/lib/types';
+import type { UserName as User } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Heart } from 'lucide-react';

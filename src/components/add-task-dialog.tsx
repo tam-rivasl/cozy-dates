@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -43,7 +44,7 @@ const taskSchema = z.object({
     errorMap: () => ({ message: 'Please select a priority.' }),
   }),
   notes: z.string().max(500, 'Notes are too long').optional(),
-  watchlistItemId: z.string().optional(),
+  watchlist_item_id: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -51,7 +52,7 @@ type TaskFormValues = z.infer<typeof taskSchema>;
 interface AddTaskDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'createdBy' | 'photos'>) => void;
+  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos'>) => Promise<void>;
   initialData?: Partial<TaskFormValues>;
 }
 
@@ -68,7 +69,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
       hour: '19',
       minute: '00',
       category: 'Date Night',
-      watchlistItemId: undefined,
+      watchlist_item_id: undefined,
     },
   });
 
@@ -83,7 +84,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
         category: initialData?.category || 'Date Night',
         priority: initialData?.priority,
         date: initialData?.date,
-        watchlistItemId: initialData?.watchlistItemId,
+        watchlist_item_id: initialData?.watchlist_item_id,
       });
     }
   }, [isOpen, initialData, form]);

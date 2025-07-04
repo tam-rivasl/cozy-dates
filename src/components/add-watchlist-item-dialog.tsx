@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -28,7 +29,7 @@ import type { WatchlistItem } from '@/lib/types';
 interface AddWatchlistItemDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => void;
+  onAddItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by'>) => Promise<void>;
 }
 
 const itemSchema = z.object({
@@ -57,10 +58,12 @@ export function AddWatchlistItemDialog({ isOpen, onOpenChange, onAddItem }: AddW
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+      >
         <DialogHeader>
           <DialogTitle>Add to Watchlist</DialogTitle>
-          <DialogDescription>
+          <DialogDescription> 
             What movie or series should we watch next?
           </DialogDescription>
         </DialogHeader>

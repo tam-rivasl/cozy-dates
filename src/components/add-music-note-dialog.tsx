@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -27,13 +28,13 @@ import type { MusicNote } from '@/lib/types';
 interface AddMusicNoteDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddItem: (item: Omit<MusicNote, 'id' | 'addedBy'>) => void;
+  onAddItem: (item: Omit<MusicNote, 'id' | 'added_by'>) => Promise<void>;
 }
 
 const itemSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
   notes: z.string().min(1, 'A dedication note is required.').max(500, 'Note is too long'),
-  playlistUrl: z.string().url({ message: "Please enter a valid playlist URL." }),
+  playlist_url: z.string().url({ message: "Please enter a valid playlist URL." }),
 });
 
 type ItemFormValues = z.infer<typeof itemSchema>;
@@ -44,7 +45,7 @@ export function AddMusicNoteDialog({ isOpen, onOpenChange, onAddItem }: AddMusic
     defaultValues: {
       title: '',
       notes: '',
-      playlistUrl: '',
+      playlist_url: '',
     },
   });
 
@@ -93,7 +94,7 @@ export function AddMusicNoteDialog({ isOpen, onOpenChange, onAddItem }: AddMusic
             />
             <FormField
               control={form.control}
-              name="playlistUrl"
+              name="playlist_url"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Playlist Link</FormLabel>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -35,7 +36,7 @@ export default function WatchlistPage() {
             description: 'Dia de pelis',
             notes: item.notes,
             category: 'Movie Day',
-            watchlistItemId: item.id,
+            watchlist_item_id: item.id,
         });
         setAddPlanDialogOpen(true);
     };

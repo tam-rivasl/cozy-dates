@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { WatchlistItem } from '@/lib/types';
@@ -14,7 +15,7 @@ interface WatchlistItemCardProps {
 }
 
 export function WatchlistItemCard({ item, onDelete, onPlanMovieNight }: WatchlistItemCardProps) {
-  const creatorAvatarUrl = item.addedBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
+  const creatorAvatarUrl = item.added_by === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
   const isWatched = item.status === 'Watched';
 
   return (
@@ -48,10 +49,10 @@ export function WatchlistItemCard({ item, onDelete, onPlanMovieNight }: Watchlis
                <div className="flex items-center gap-2">
                 <span>Added by:</span>
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={creatorAvatarUrl} alt={item.addedBy} />
-                  <AvatarFallback>{item.addedBy.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={creatorAvatarUrl} alt={item.added_by} />
+                  <AvatarFallback>{item.added_by.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span className="font-medium">{item.addedBy}</span>
+                <span className="font-medium">{item.added_by}</span>
               </div>
             </div>
           </div>

@@ -1,35 +1,19 @@
-'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+'use client';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import type { MusicNote } from '@/lib/types';
 import { useUser } from '@/context/UserContext';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/lib/supabase';
 
 interface MusicContextType {
   musicNotes: MusicNote[];
   isLoading: boolean;
-  addMusicNote: (item: Omit<MusicNote, 'id' | 'addedBy'>) => void;
-  deleteMusicNote: (noteId: string) => void;
+  addMusicNote: (note: Omit<MusicNote, 'id' | 'added_by'>) => Promise<void>;
+  deleteMusicNote: (id: string) => Promise<void>;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
-
-const initialMusicNotes: MusicNote[] = [
-    { 
-      id: 'm1', 
-      title: 'For your morning coffee ☕', 
-      notes: 'Thought you might like this chill playlist to start your day. Love you!', 
-      playlistUrl: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M', 
-      addedBy: 'Carlos' 
-    },
-    { 
-      id: 'm2', 
-      title: 'Our Anniversary Songs', 
-      notes: 'A collection of songs that remind me of us over the years. Happy anniversary, my love.', 
-      playlistUrl: 'https://music.youtube.com/playlist?list=PL4fGSI1pDJn5kI81J1fYC0_B_k3qByOU5', 
-      addedBy: 'Tamara'
-    },
-];
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const [musicNotes, setMusicNotes] = useState<MusicNote[]>([]);
@@ -38,53 +22,44 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedNotes = localStorage.getItem('cozy-music-notes');
-      if (storedNotes) {
-        setMusicNotes(JSON.parse(storedNotes));
+    const fetchNotes = async () => {
+      const { data, error } = await supabase.from('music_notes').select('*');
+      if (error) {
+        toast({ variant: "destructive", title: 'Error loading music notes', description: error.message });
       } else {
-        setMusicNotes(initialMusicNotes);
+        setMusicNotes(data || []);
       }
-    } catch (e) {
-      setMusicNotes(initialMusicNotes);
-    } finally {
       setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading) {
-      try {
-        localStorage.setItem('cozy-music-notes', JSON.stringify(musicNotes));
-      } catch (e) {
-        // LocalStorage not available
-      }
-    }
-  }, [musicNotes, isLoading]);
-
-  const addMusicNote = (note: Omit<MusicNote, 'id' | 'addedBy'>) => {
-    if (!user) return;
-    const newNote: MusicNote = {
-      ...note,
-      id: crypto.randomUUID(),
-      addedBy: user,
     };
-    setMusicNotes((prev) => [newNote, ...prev]);
-    toast({
-      title: "Dedication Added!",
-      description: `Your musical note "${newNote.title}" has been shared.`,
-    })
+    fetchNotes();
+  }, [toast]);
+
+  const addMusicNote = async (note: Omit<MusicNote, 'id' | 'added_by'>) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('music_notes')
+      .insert([{ ...note, added_by: user }])
+      .select()
+      .single();
+
+    if (error) {
+      toast({ variant: "destructive", title: 'Error adding note', description: error.message });
+    } else {
+      setMusicNotes((prev) => [data, ...prev]);
+      toast({ title: "Dedication Added!", description: `Your note "${data.title}" was added.` });
+    }
   };
 
-  const deleteMusicNote = (noteId: string) => {
-    setMusicNotes((prev) => prev.filter((note) => note.id !== noteId));
-     toast({
-      title: "Dedication Removed",
-      description: "The musical note has been deleted.",
-      variant: "destructive"
-    })
+  const deleteMusicNote = async (id: string) => {
+    const { error } = await supabase.from('music_notes').delete().eq('id', id);
+    if (error) {
+      toast({ variant: "destructive", title: 'Error deleting note', description: error.message });
+    } else {
+      setMusicNotes((prev) => prev.filter((note) => note.id !== id));
+      toast({ title: "Dedication Removed", description: "Note deleted.", variant: "destructive" });
+    }
   };
-  
+
   return (
     <MusicContext.Provider value={{ musicNotes, isLoading, addMusicNote, deleteMusicNote }}>
       {children}
@@ -94,8 +69,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
 export function useMusic() {
   const context = useContext(MusicContext);
-  if (context === undefined) {
-    throw new Error('useMusic must be used within a MusicProvider');
-  }
+  if (!context) throw new Error('useMusic must be used within a MusicProvider');
   return context;
 }
