@@ -1,97 +1,63 @@
 
--- Create profiles table
-CREATE TABLE public.profiles (
+-- Habilitar la extensión pgcrypto para generar UUIDs
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
+
+-- 1. Tabla de Perfiles de Usuario
+-- Almacena información pública de los usuarios, vinculada a la tabla `auth.users`.
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   username TEXT UNIQUE NOT NULL CHECK (char_length(username) >= 3),
   avatar_url TEXT,
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- RLS policies for profiles
-CREATE POLICY "Users can view their own profile" ON public.profiles
-    FOR SELECT TO authenticated USING (auth.uid() = id);
-CREATE POLICY "Users can update their own profile" ON public.profiles
-    FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
-
--- Trigger to create a profile for new users
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, username)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'username');
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
-
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Create tasks table
-CREATE TABLE public.tasks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+-- 2. Tabla de Tareas
+-- Almacena las tareas de la pareja.
+CREATE TABLE IF NOT EXISTS public.tasks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   title TEXT NOT NULL,
   description TEXT,
-  date TIMESTAMPTZ NOT NULL,
+  date TIMESTAMP WITH TIME ZONE NOT NULL,
   category TEXT,
   priority TEXT,
   completed BOOLEAN DEFAULT false,
   photos TEXT[],
   notes TEXT,
   created_by TEXT,
-  watchlist_item_id UUID
+  watchlist_item_id TEXT
 );
-ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+COMMENT ON COLUMN public.tasks.user_id IS 'Owner of the task';
 
--- RLS policies for tasks
-CREATE POLICY "Users can manage their own tasks" ON public.tasks
-  FOR ALL TO authenticated USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can view their partner's tasks" ON public.tasks
-  FOR SELECT TO authenticated USING (true);
-
-
--- Create watchlist_items table
-CREATE TABLE public.watchlist_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+-- 3. Tabla de Lista de Seguimiento
+-- Para películas y series que la pareja quiere ver.
+CREATE TABLE IF NOT EXISTS public.watchlist_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   title TEXT NOT NULL,
-  type TEXT,
-  status TEXT,
+  type TEXT NOT NULL,
+  status TEXT NOT NULL,
   notes TEXT,
   added_by TEXT
 );
-ALTER TABLE public.watchlist_items ENABLE ROW LEVEL SECURITY;
+COMMENT ON COLUMN public.watchlist_items.user_id IS 'Owner of the watchlist item';
 
--- RLS policies for watchlist_items
-CREATE POLICY "Users can manage their own watchlist" ON public.watchlist_items
-  FOR ALL TO authenticated USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can view their partner's watchlist" ON public.watchlist_items
-  FOR SELECT TO authenticated USING (true);
-
-
--- Create music_notes table
-CREATE TABLE public.music_notes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+-- 4. Tabla de Notas Musicales
+-- Para guardar dedicatorias y listas de reproducción.
+CREATE TABLE IF NOT EXISTS public.music_notes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   title TEXT NOT NULL,
   notes TEXT,
   playlist_url TEXT,
   added_by TEXT
 );
-ALTER TABLE public.music_notes ENABLE ROW LEVEL SECURITY;
+COMMENT ON COLUMN public.music_notes.user_id IS 'Owner of the music note';
 
--- RLS policies for music_notes
-CREATE POLICY "Users can manage their own music notes" ON public.music_notes
-  FOR ALL TO authenticated USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can view their partner's music notes" ON public.music_notes
-  FOR SELECT TO authenticated USING (true);
-
--- Create storage bucket for avatars if it doesn't exist and make it public
+-- 5. Bucket de Almacenamiento para Avatares
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -99,38 +65,133 @@ BEGIN
     ) THEN
         INSERT INTO storage.buckets (id, name, public)
         VALUES ('avatars', 'avatars', true);
-    ELSE
-        UPDATE storage.buckets SET public = true WHERE name = 'avatars';
     END IF;
 END $$;
 
--- Drop old storage policies if they exist to avoid conflicts
-DROP POLICY IF EXISTS "Users can upload their own avatars." ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can view avatars." ON storage.objects;
-DROP POLICY IF EXISTS "Users can update their own avatars." ON storage.objects;
 
--- RLS policies for storage
-CREATE POLICY "Anyone can view avatars"
-    ON storage.objects FOR SELECT
-    TO authenticated, anon
-    USING (bucket_id = 'avatars');
+-- 6. Políticas de Seguridad a Nivel de Fila (RLS)
 
+-- Habilitar RLS en todas las tablas
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.watchlist_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.music_notes ENABLE ROW LEVEL SECURITY;
+
+-- Políticas para la tabla de perfiles
+CREATE POLICY "Profiles are viewable by everyone." ON public.profiles
+    FOR SELECT USING (true);
+
+CREATE POLICY "Users can insert their own profile." ON public.profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile." ON public.profiles
+    FOR UPDATE USING (auth.uid() = id);
+
+-- Políticas para la tabla de tareas
+CREATE POLICY "Users can manage their own tasks" ON public.tasks
+    FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view all tasks" ON public.tasks
+    FOR SELECT
+    USING (true);
+
+-- Políticas para la lista de seguimiento
+CREATE POLICY "Users can manage their own watchlist items" ON public.watchlist_items
+    FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view all watchlist items" ON public.watchlist_items
+    FOR SELECT
+    USING (true);
+    
+-- Políticas para las notas musicales
+CREATE POLICY "Users can manage their own music notes" ON public.music_notes
+    FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view all music notes" ON public.music_notes
+    FOR SELECT
+    USING (true);
+
+-- 7. Políticas de Almacenamiento para Avatares
 CREATE POLICY "Users can upload their own avatars"
-    ON storage.objects FOR INSERT
-    TO authenticated
-    WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+ON storage.objects FOR INSERT TO authenticated WITH CHECK (
+  bucket_id = 'avatars' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
 
-CREATE POLICY "Users can update their own avatars" 
-    ON storage.objects FOR UPDATE
-    TO authenticated
-    USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can update their own avatars"
+ON storage.objects FOR UPDATE TO authenticated USING (
+  bucket_id = 'avatars' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
 
 CREATE POLICY "Users can delete their own avatars"
-    ON storage.objects FOR DELETE
-    TO authenticated
-    USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+ON storage.objects FOR DELETE TO authenticated USING (
+  bucket_id = 'avatars' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
 
--- Create indexes for performance
+CREATE POLICY "Anyone can view avatars"
+ON storage.objects FOR SELECT USING (
+    bucket_id = 'avatars'
+);
+
+-- 8. Trigger para Crear Perfil de Usuario Automáticamente
+-- Esta función se ejecuta después de que un nuevo usuario se registra en `auth.users`
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+begin
+  -- Inserta un nuevo perfil usando el `id` y el `username` de los metadatos del nuevo usuario
+  insert into public.profiles (id, username)
+  values (new.id, new.raw_user_meta_data->>'username');
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Crear el trigger que llama a la función anterior
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+
+-- 9. Índices para mejorar el rendimiento
 CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON public.tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_watchlist_items_user_id ON public.watchlist_items(user_id);
 CREATE INDEX IF NOT EXISTS idx_music_notes_user_id ON public.music_notes(user_id);
+
+-- 10. Función para filtrar tareas (Ejemplo de función RPC)
+CREATE OR REPLACE FUNCTION public.get_tasks_by_category_and_priority(
+    category_filter text,
+    priority_filter text
+) RETURNS SETOF public.tasks
+LANGUAGE sql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+    SELECT *
+    FROM public.tasks
+    WHERE
+        (category_filter IS NULL OR category = category_filter) AND
+        (priority_filter IS NULL OR priority = priority_filter) AND
+        user_id = auth.uid()
+    ORDER BY date ASC;
+$$;
+
+-- 11. Vista para tareas con información de usuario
+CREATE OR REPLACE VIEW public.tasks_with_user_info
+WITH (security_invoker=on)
+AS
+SELECT
+    t.*,
+    p.username as owner_username,
+    p.avatar_url as owner_avatar
+FROM
+    public.tasks t
+JOIN
+    public.profiles p ON t.user_id = p.id;
