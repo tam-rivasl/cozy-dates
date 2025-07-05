@@ -18,7 +18,7 @@ const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters long.'),
   email: z.string().email('Please enter a valid email address.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
-  avatar: z.instanceof(FileList).refine(files => files?.length === 1, 'Avatar image is required.'),
+  avatar: z.any().refine((files) => files?.length === 1, 'Avatar image is required.'),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
