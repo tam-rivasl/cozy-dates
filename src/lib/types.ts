@@ -6,7 +6,19 @@ export interface Profile {
   username: string;
   avatar_url: string;
   updated_at: string;
+  partner_id: string | null;
 }
+
+export type CoupleInvitationStatus = 'pending' | 'accepted' | 'declined';
+
+export interface CoupleInvitation {
+  id: string;
+  created_at: string;
+  inviter_id: string;
+  invitee_email: string;
+  status: CoupleInvitationStatus;
+}
+
 
 export interface MusicNote {
   id: string;
