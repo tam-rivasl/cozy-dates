@@ -76,11 +76,11 @@ export default function RegisterPage() {
         setIsLoading(false);
         return;
     }
-    if (avatarFile.size > 2 * 1024 * 1024) { // 2MB
+    if (avatarFile.size > 1 * 1024 * 1024) { // 1MB
         toast({
             variant: "destructive",
             title: "File Too Large",
-            description: "The avatar image must be smaller than 2MB.",
+            description: "The avatar image must be smaller than 1MB.",
         });
         setIsLoading(false);
         return;
