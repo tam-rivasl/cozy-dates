@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import imageCompression from 'browser-image-compression';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -56,7 +57,6 @@ export default function RegisterPage() {
     const { email, password, username, avatar } = data;
     const avatarFile = avatar[0];
 
-    // Client-side validation
     if (!avatarFile) {
         toast({
             variant: "destructive",
@@ -66,6 +66,7 @@ export default function RegisterPage() {
         setIsLoading(false);
         return;
     }
+    
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(avatarFile.type)) {
         toast({
@@ -76,32 +77,49 @@ export default function RegisterPage() {
         setIsLoading(false);
         return;
     }
+    
     if (avatarFile.size > 1 * 1024 * 1024) { // 1MB
         toast({
             variant: "destructive",
             title: "File Too Large",
             description: "The avatar image must be smaller than 1MB.",
         });
-        setIsLoading(false);
-        return;
     }
-    
-    const error = await signUp(email, password, username, avatarFile);
 
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Registration Failed',
-        description: error.message.includes('permission') ? 'You do not have permission to perform this action.' : error.message,
-      });
-    } else {
-      toast({
-        title: 'Registration Successful!',
-        description: "Welcome to Cozy Dates! Please check your email to confirm your account.",
-      });
-      router.push('/login');
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      }
+      
+      const compressedFile = await imageCompression(avatarFile, options);
+      
+      const error = await signUp(email, password, username, compressedFile);
+
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Registration Failed',
+          description: error.message.includes('permission') ? 'You do not have permission to perform this action.' : error.message,
+        });
+      } else {
+        toast({
+          title: 'Registration Successful!',
+          description: "Welcome to Cozy Dates! Please check your email to confirm your account.",
+        });
+        router.push('/login');
+      }
+    } catch (compressionError) {
+       toast({
+          variant: 'destructive',
+          title: 'Image Processing Error',
+          description: 'Could not process the image. Please try a different one.',
+        });
+        console.error('Image compression error:', compressionError);
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
