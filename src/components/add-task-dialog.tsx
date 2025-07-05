@@ -52,7 +52,7 @@ type TaskFormValues = z.infer<typeof taskSchema>;
 interface AddTaskDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'owner_id'>) => Promise<void>;
+  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'user_id'>) => Promise<void>;
   initialData?: Partial<TaskFormValues>;
 }
 

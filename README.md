@@ -16,7 +16,7 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
      - Estado de completado.
      - Fotos y notas adicionales.
      - Referencia al propietario (vinculado a `auth.users`).
-   - Políticas RLS que permiten a usuarios autenticados ver todas las tareas, pero solo modificar las propias.
+   - Políticas RLS que permiten a los usuarios autenticados ver y modificar solo sus propias tareas.
 3. **Lista de Seguimiento de Entretenimiento**
    - La tabla `public.watchlist_items` guarda elementos para ver:
      - Películas y series con su título, tipo y estado.
@@ -28,13 +28,12 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
      - URLs de listas de reproducción.
    - Vinculación al propietario con las mismas políticas de seguridad.
 5. **Almacenamiento de Archivos**
-   - Configuré un bucket de almacenamiento `avatars` para imágenes de perfil.
-   - Implementé políticas que permiten:
+   - Se configuró un bucket de almacenamiento `avatars` para imágenes de perfil.
+   - Se implementaron políticas que permiten:
      - Acceso público para visualizar avatares.
-     - Subida de avatares solo para usuarios autenticados.
-     - Actualización de avatares solo por sus propietarios.
+     - Subida, actualización y eliminación de avatares solo para usuarios autenticados y dueños del archivo.
 6. **Automatización**
-   - Creé una función `handle_new_user()` y un trigger asociado que:
+   - Se creó una función `handle_new_user()` y un trigger asociado que:
      - Se activa automáticamente cuando se registra un nuevo usuario.
      - Extrae el nombre de usuario de los metadatos.
      - Crea automáticamente un perfil en `public.profiles`.
