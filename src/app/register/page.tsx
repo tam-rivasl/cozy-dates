@@ -78,17 +78,19 @@ export default function RegisterPage() {
         return;
     }
     
-    if (avatarFile.size > 1 * 1024 * 1024) { // 1MB
+    if (avatarFile.size > 4 * 1024 * 1024) { // 4MB
         toast({
             variant: "destructive",
             title: "File Too Large",
-            description: "The avatar image must be smaller than 1MB.",
+            description: "The avatar image must be smaller than 4MB.",
         });
+        setIsLoading(false);
+        return;
     }
 
     try {
       const options = {
-        maxSizeMB: 1,
+        maxSizeMB: 4,
         maxWidthOrHeight: 1024,
         useWebWorker: true,
       }
