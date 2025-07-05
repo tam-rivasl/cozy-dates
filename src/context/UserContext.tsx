@@ -76,19 +76,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, pass: string, username: string, avatarFile: File) => {
+    // 1. Sign up the user. The trigger will create the initial profile.
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password: pass,
-      options: {
-        data: {
-          username: username,
-        }
-      }
     });
 
     if (authError) return authError;
     if (!authData.user) return new Error('User not created.');
     
+    // 2. Upload the avatar.
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('avatars')
@@ -99,15 +96,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     if (uploadError) return uploadError;
     
+    // 3. Get the public URL for the avatar.
     const { data: publicUrlData } = supabase
       .storage
       .from('avatars')
       .getPublicUrl(uploadData.path);
       
+    // 4. Update the newly created profile with the correct username and avatar URL.
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
-        avatar_url: publicUrlData.publicUrl
+        username: username,
+        avatar_url: publicUrlData.publicUrl,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', authData.user.id);
 
