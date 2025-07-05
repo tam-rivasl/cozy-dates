@@ -1,31 +1,62 @@
-# Goals and Memories App
+# Explicación del Sistema de Gestión de Tareas y Entretenimiento con Supabase
 
-This is a web application built with Next.js and Firebase that helps users track their personal goals, manage tasks, and create memories.
+## Resumen del Proyecto
+He desarrollado un sistema completo de gestión de tareas y entretenimiento utilizando Supabase como backend. El sistema incluye autenticación de usuarios, gestión de perfiles, tareas, listas de seguimiento para películas/series y notas musicales. Todo está protegido con políticas de seguridad a nivel de fila (Row Level Security) para garantizar que los usuarios solo puedan acceder y modificar sus propios datos.
 
-## Features
+## Estructura de la Base de Datos
+1. **Sistema de Autenticación y Perfiles**
+   - Utilizo la tabla `auth.users` nativa de Supabase para la autenticación.
+   - Creé una tabla `public.profiles` vinculada a `auth.users` que almacena:
+     - Nombres de usuario únicos (con validación de longitud mínima).
+     - URLs de avatares.
+   - La tabla está protegida con RLS para que los perfiles sean visibles públicamente, pero solo editables por sus propietarios.
+2. **Gestión de Tareas**
+   - La tabla `public.tasks` almacena tareas con:
+     - Título, descripción, fecha, categoría y prioridad.
+     - Estado de completado.
+     - Fotos y notas adicionales.
+     - Referencia al propietario (vinculado a `auth.users`).
+   - Políticas RLS que permiten a usuarios autenticados ver todas las tareas, pero solo modificar las propias.
+3. **Lista de Seguimiento de Entretenimiento**
+   - La tabla `public.watchlist_items` guarda elementos para ver:
+     - Películas y series con su título, tipo y estado.
+     - Notas personales sobre cada elemento.
+   - Vinculación al propietario con políticas RLS similares a las tareas.
+4. **Notas Musicales**
+   - La tabla `public.music_notes` permite a los usuarios guardar:
+     - Títulos y notas sobre música.
+     - URLs de listas de reproducción.
+   - Vinculación al propietario con las mismas políticas de seguridad.
+5. **Almacenamiento de Archivos**
+   - Configuré un bucket de almacenamiento `avatars` para imágenes de perfil.
+   - Implementé políticas que permiten:
+     - Acceso público para visualizar avatares.
+     - Subida de avatares solo para usuarios autenticados.
+     - Actualización de avatares solo por sus propietarios.
+6. **Automatización**
+   - Creé una función `handle_new_user()` y un trigger asociado que:
+     - Se activa automáticamente cuando se registra un nuevo usuario.
+     - Extrae el nombre de usuario de los metadatos.
+     - Crea automáticamente un perfil en `public.profiles`.
 
-* Goal tracking
-* Task management
-* Memory creation and storage
-* User authentication with Supabase Authentication
-* Data storage with Supabase Postgres
+## Pasos para la migración del frontend
 
-## Installation & Supabase Setup
+1.  **Obtener las credenciales de Supabase**:
+    *   Ve a tu panel de Supabase.
+    *   En la configuración del proyecto, busca la sección de API.
+    *   Copia la **URL del proyecto** y la **clave pública anónima (anon public key)**.
+2.  **Configurar el entorno**:
+    *   Crea un archivo `.env` en la raíz de tu proyecto si no existe.
+    *   Añade las siguientes líneas, reemplazando los valores con tus credenciales:
+        ```
+        NEXT_PUBLIC_SUPABASE_URL=TU_URL_DE_SUPABASE
+        NEXT_PUBLIC_SUPABASE_ANON_KEY=TU_CLAVE_ANONIMA
+        ```
+3.  **Ejecutar la migración SQL**:
+    *   En tu panel de Supabase, ve al **SQL Editor**.
+    *   Copia todo el contenido de `supabase/migrations/0000_initial_schema.sql`.
+    *   Pega el contenido en una nueva consulta y haz clic en **"RUN"**.
+4. **Desplegar Edge Functions**:
+   * Sigue la documentación de Supabase para desplegar las Edge Functions que se encuentran en la carpeta `supabase/functions`.
 
-1. Clone the repository.
-2. Install dependencies using `npm install`.
-3. Set up a Firebase project and configure the application with your Firebase project details.
-4. Run the development server using `npm run dev`.
-
-### Supabase Database Migration
-
-To set up your database tables and security policies, you need to run the SQL script provided in this project.
-
-1. Go to your Supabase project dashboard.
-2. In the left menu, find and click on **SQL Editor**.
-3. Click on **+ New query**.
-4. Copy the entire content from `supabase/migrations/0000_initial_schema.sql` in this project.
-5. Paste the content into the Supabase SQL Editor.
-6. Click the **RUN** button.
-
-This will create all the necessary tables, relationships, and security policies for the application to work correctly.
+¡Con estos pasos, tu aplicación estará lista y conectada a tu backend de Supabase!

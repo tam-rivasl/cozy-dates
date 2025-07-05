@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 interface WatchlistContextType {
   watchlistItems: WatchlistItem[];
   isLoading: boolean;
-  addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'owner_id'>) => Promise<void>;
+  addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'user_id'>) => Promise<void>;
   deleteWatchlistItem: (id: string) => Promise<void>;
   markAsWatched: (id: string) => Promise<void>;
 }
@@ -35,13 +35,13 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     fetchItems();
   }, [toast]);
 
-  const addWatchlistItem = async (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'owner_id'>) => {
+  const addWatchlistItem = async (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'user_id'>) => {
     if (!profile || !user) return;
     const newItem = {
         ...item,
         status: 'To Watch',
         added_by: profile.username,
-        owner_id: user.id,
+        user_id: user.id,
     };
     const { data, error } = await supabase
       .from('watchlist_items')
