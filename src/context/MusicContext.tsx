@@ -1,3 +1,4 @@
+
 'use client';
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import type { MusicNote } from '@/lib/types';
@@ -8,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 interface MusicContextType {
   musicNotes: MusicNote[];
   isLoading: boolean;
-  addMusicNote: (note: Omit<MusicNote, 'id' | 'added_by' | 'user_id'>) => Promise<void>;
+  addMusicNote: (note: Omit<MusicNote, 'id' | 'added_by' | 'user_id' | 'created_at'>) => Promise<void>;
   deleteMusicNote: (id: string) => Promise<void>;
 }
 
@@ -31,10 +32,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     };
-    fetchNotes();
-  }, [toast]);
+    if (user) {
+      fetchNotes();
+    } else {
+      setIsLoading(false);
+    }
+  }, [toast, user]);
 
-  const addMusicNote = async (note: Omit<MusicNote, 'id' | 'added_by' | 'user_id'>) => {
+  const addMusicNote = async (note: Omit<MusicNote, 'id' | 'added_by' | 'user_id' | 'created_at'>) => {
     if (!profile || !user) return;
     const newNote = { ...note, added_by: profile.username, user_id: user.id };
     const { data, error } = await supabase

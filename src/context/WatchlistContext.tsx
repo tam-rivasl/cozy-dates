@@ -1,3 +1,4 @@
+
 'use client';
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import type { WatchlistItem } from '@/lib/types';
@@ -8,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 interface WatchlistContextType {
   watchlistItems: WatchlistItem[];
   isLoading: boolean;
-  addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'user_id'>) => Promise<void>;
+  addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'user_id' | 'created_at'>) => Promise<void>;
   deleteWatchlistItem: (id: string) => Promise<void>;
   markAsWatched: (id: string) => Promise<void>;
 }
@@ -32,10 +33,14 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     };
-    fetchItems();
-  }, [toast]);
+    if (user) {
+        fetchItems();
+    } else {
+        setIsLoading(false);
+    }
+  }, [toast, user]);
 
-  const addWatchlistItem = async (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'user_id'>) => {
+  const addWatchlistItem = async (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'user_id' | 'created_at'>) => {
     if (!profile || !user) return;
     const newItem = {
         ...item,

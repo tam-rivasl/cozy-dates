@@ -15,6 +15,7 @@ export interface MusicNote {
   playlist_url: string;
   added_by: UserName;
   user_id: string;
+  created_at: string;
 }
 
 export type WatchlistType = 'Movie' | 'Series';
@@ -28,6 +29,7 @@ export interface WatchlistItem {
   notes?: string;
   added_by: UserName;
   user_id: string;
+  created_at: string;
 }
 
 export type TaskCategory = 'Date Night' | 'Travel Plans' | 'To-Do' | 'Special Event' | 'Movie Day';
@@ -46,4 +48,5 @@ export interface Task {
   created_by: UserName;
   watchlist_item_id?: string | null;
   user_id: string;
+  created_at: string;
 }

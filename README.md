@@ -9,13 +9,14 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
    - Creé una tabla `public.profiles` vinculada a `auth.users` que almacena:
      - Nombres de usuario únicos (con validación de longitud mínima).
      - URLs de avatares.
+     - Timestamp de última actualización.
    - La tabla está protegida con RLS para que los perfiles sean visibles públicamente, pero solo editables por sus propietarios.
 2. **Gestión de Tareas**
    - La tabla `public.tasks` almacena tareas con:
      - Título, descripción, fecha, categoría y prioridad.
      - Estado de completado.
      - Fotos y notas adicionales.
-     - Referencia al propietario (vinculado a `auth.users`).
+     - Referencia al propietario (`user_id` vinculado a `auth.users`).
    - Políticas RLS que permiten a usuarios autenticados ver todas las tareas, pero solo modificar las propias.
 3. **Lista de Seguimiento de Entretenimiento**
    - La tabla `public.watchlist_items` guarda elementos para ver:
@@ -37,7 +38,7 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
      - Se activa automáticamente cuando se registra un nuevo usuario.
      - Extrae el nombre de usuario de los metadatos.
      - Crea automáticamente un perfil en `public.profiles`.
-7. **Edge Functions para Autenticación**
+7. **Edge Functions**
     - `sync-tasks` permite sincronizar tareas con servicios externos.
 
 ## Pasos para la migración del frontend

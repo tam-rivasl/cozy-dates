@@ -10,7 +10,7 @@ import { supabase, type SupabaseTask } from '@/lib/supabase';
 interface TaskContextType {
   tasks: Task[];
   isLoading: boolean;
-  addTask: (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'user_id'>) => Promise<void>;
+  addTask: (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'user_id' | 'created_at'>) => Promise<void>;
   toggleComplete: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   addPhoto: (id: string, photoDataUri: string) => Promise<void>;
@@ -36,10 +36,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     };
-    loadTasks();
-  }, [toast]);
+    if (user) {
+      loadTasks();
+    } else {
+      setIsLoading(false);
+    }
+  }, [toast, user]);
 
-  const addTask = async (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'user_id'>) => {
+  const addTask = async (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'user_id' | 'created_at'>) => {
     if (!profile || !user) return;
     const newTask = {
         ...task,
