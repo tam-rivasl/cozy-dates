@@ -35,6 +35,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (user) {
       fetchNotes();
     } else {
+      setMusicNotes([]);
       setIsLoading(false);
     }
   }, [toast, user]);
@@ -57,6 +58,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteMusicNote = async (id: string) => {
+     const note = musicNotes.find(n => n.id === id);
+    if (!note || note.user_id !== user?.id) {
+        toast({ variant: "destructive", title: 'Not Authorized', description: "You can only delete your own notes." });
+        return;
+    }
     const { error } = await supabase.from('music_notes').delete().eq('id', id);
     if (error) {
       toast({ variant: "destructive", title: 'Error deleting note', description: error.message });

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
@@ -14,6 +15,7 @@ interface UserContextType {
   signIn: (email: string, pass: string) => Promise<AuthError | null>;
   signUp: (email: string, pass: string, username: string, avatar: File) => Promise<AuthError | null>;
   signOut: () => Promise<void>;
+  updateProfile: (username: string, avatarFile: File | null) => Promise<AuthError | null>;
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -88,7 +90,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
   
     if (authError) return authError;
-    if (!authData.user) return new Error('User not created.');
+    if (!authData.user) {
+      // This case should ideally not happen if authError is null.
+      // But as a safeguard:
+      return new Error('User not created despite no auth error.');
+    }
       
     // 2. Upload the avatar.
     const fileExt = avatarFile.name.split('.').pop();
@@ -100,7 +106,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       .from('avatars')
       .upload(filePath, avatarFile, {
         cacheControl: '3600',
-        upsert: true, // Use upsert to overwrite existing avatar
+        upsert: true,
       });
   
     if (uploadError) return uploadError;
@@ -127,6 +133,48 @@ export function UserProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const updateProfile = async (username: string, avatarFile: File | null) => {
+    if (!user) return new Error("User not authenticated");
+
+    let avatar_url = profile?.avatar_url;
+
+    if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, avatarFile, {
+                cacheControl: '3600',
+                upsert: true,
+            });
+
+        if (uploadError) return uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+        
+        avatar_url = publicUrlData.publicUrl;
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({
+            username,
+            avatar_url,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+    
+    if (!error) {
+      await fetchProfile(user.id);
+    }
+    
+    return error;
+  };
+
   const value = {
     session,
     user,
@@ -135,6 +183,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     signUp,
+    updateProfile,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

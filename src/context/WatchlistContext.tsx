@@ -36,6 +36,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     if (user) {
         fetchItems();
     } else {
+        setWatchlistItems([]);
         setIsLoading(false);
     }
   }, [toast, user]);
@@ -63,6 +64,12 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   };
 
   const markAsWatched = async (id: string) => {
+    const item = watchlistItems.find(i => i.id === id);
+    if (!item || item.user_id !== user?.id) {
+        toast({ variant: "destructive", title: 'Not Authorized', description: "You can only update your own items." });
+        return;
+    }
+
     const { error } = await supabase
       .from('watchlist_items')
       .update({ status: 'Watched' })
@@ -78,6 +85,11 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteWatchlistItem = async (id: string) => {
+    const item = watchlistItems.find(i => i.id === id);
+    if (!item || item.user_id !== user?.id) {
+        toast({ variant: "destructive", title: 'Not Authorized', description: "You can only delete your own items." });
+        return;
+    }
     const { error } = await supabase.from('watchlist_items').delete().eq('id', id);
     if (error) {
       toast({ variant: "destructive", title: 'Error deleting item', description: error.message });

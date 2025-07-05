@@ -39,6 +39,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (user) {
       loadTasks();
     } else {
+      setTasks([]);
       setIsLoading(false);
     }
   }, [toast, user]);
@@ -73,6 +74,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
+    if (task.user_id !== user?.id) {
+        toast({ variant: "destructive", title: 'Not Authorized', description: "You can only complete your own tasks." });
+        return;
+    }
+
     const { error } = await supabase
       .from('tasks')
       .update({ completed: !task.completed })
@@ -91,6 +97,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteTask = async (id: string) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.user_id !== user?.id) {
+        toast({ variant: "destructive", title: 'Not Authorized', description: "You can only delete your own tasks." });
+        return;
+    }
     const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) {
         toast({ variant: "destructive", title: 'Error deleting task', description: error.message });
@@ -104,6 +115,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const addPhoto = async (id: string, uri: string) => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
+    
+    if (task.user_id !== user?.id) {
+        toast({ variant: "destructive", title: 'Not Authorized', description: "You can only add photos to your own tasks." });
+        return;
+    }
 
     const newPhotos = [...(task.photos || []), uri];
     const { error } = await supabase.from('tasks').update({ photos: newPhotos }).eq('id', id);

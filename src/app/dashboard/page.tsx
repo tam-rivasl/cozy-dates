@@ -14,7 +14,7 @@ import { useTasks } from '@/context/TaskContext';
 
 export default function DashboardPage() {
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-  const { user, isLoading: isUserLoading } = useUser();
+  const { user, isLoading: isUserLoading, logout } = useUser();
   const { tasks, isLoading: areTasksLoading, addTask, toggleComplete, deleteTask, addPhoto } = useTasks();
   const router = useRouter();
 
