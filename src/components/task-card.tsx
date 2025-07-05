@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
-import type { Task } from '@/lib/types';
+import { useRef, useState, useEffect } from 'react';
+import type { Task, Profile } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,8 @@ import { CalendarDays, Tag, Flag, Trash2, User, Camera, StickyNote } from 'lucid
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from '@/context/UserContext';
+import { supabase } from '@/lib/supabase';
 
 interface TaskCardProps {
   task: Task;
@@ -20,13 +22,23 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskCardProps) {
+  const { profile } = useUser();
+  const [createdByProfile, setCreatedByProfile] = useState<Profile | null>(null);
+
   const priorityColors = {
     High: 'bg-red-500/80 hover:bg-red-500',
     Medium: 'bg-yellow-500/80 hover:bg-yellow-500',
     Low: 'bg-green-500/80 hover:bg-green-500',
   };
 
-  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
+  useEffect(() => {
+    const getCreatorProfile = async () => {
+      const { data } = await supabase.from('profiles').select('*').eq('username', task.created_by).single();
+      setCreatedByProfile(data);
+    }
+    getCreatorProfile();
+  }, [task.created_by]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -76,15 +88,17 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
               {task.title}
             </CardTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDelete(task.id)}
-            aria-label={`Delete task "${task.title}"`}
-            className="text-muted-foreground hover:text-destructive shrink-0"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
+          { task.created_by === profile?.username &&
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(task.id)}
+              aria-label={`Delete task "${task.title}"`}
+              className="text-muted-foreground hover:text-destructive shrink-0"
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          }
         </div>
         {task.description && (
           <CardDescription className={`pt-2 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
@@ -111,10 +125,10 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
                <div className="flex items-center gap-2">
                 <span>Idea by:</span>
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={creatorAvatarUrl} alt={task.createdBy} />
-                  <AvatarFallback>{task.createdBy.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={createdByProfile?.avatar_url} alt={task.created_by} />
+                  <AvatarFallback>{task.created_by.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span className="font-medium">{task.createdBy}</span>
+                <span className="font-medium">{task.created_by}</span>
               </div>
             </div>
           </div>

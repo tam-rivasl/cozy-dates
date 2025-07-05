@@ -1,4 +1,3 @@
-
 'use client';
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import type { WatchlistItem } from '@/lib/types';
@@ -19,11 +18,12 @@ const WatchlistContext = createContext<WatchlistContextType | undefined>(undefin
 export function WatchlistProvider({ children }: { children: ReactNode }) {
   const [watchlistItems, setWatchlistItems] = useState<WatchlistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useUser();
+  const { profile } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchItems = async () => {
+      setIsLoading(true);
       const { data, error } = await supabase.from('watchlist_items').select('*');
       if (error) {
         toast({ variant: "destructive", title: 'Error loading watchlist', description: error.message });
@@ -36,11 +36,11 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const addWatchlistItem = async (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by'>) => {
-    if (!user) return;
+    if (!profile) return;
     const newItem = {
         ...item,
         status: 'To Watch',
-        added_by: user
+        added_by: profile.username
     };
     const { data, error } = await supabase
       .from('watchlist_items')

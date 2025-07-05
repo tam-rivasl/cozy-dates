@@ -1,6 +1,7 @@
 'use client';
 
-import type { Task } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import type { Task, Profile } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { format } from 'date-fns';
@@ -8,9 +9,20 @@ import { CalendarDays, User, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Button } from './ui/button';
+import { useUser } from '@/context/UserContext';
+import { supabase } from '@/lib/supabase';
 
 export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: string) => void }) {
-  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
+  const { profile } = useUser();
+  const [createdByProfile, setCreatedByProfile] = useState<Profile | null>(null);
+  
+  useEffect(() => {
+    const getCreatorProfile = async () => {
+      const { data } = await supabase.from('profiles').select('*').eq('username', task.created_by).single();
+      setCreatedByProfile(data);
+    }
+    getCreatorProfile();
+  }, [task.created_by]);
 
   return (
     <Card className="overflow-hidden">
@@ -20,15 +32,17 @@ export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: stri
             <CardTitle className="font-headline text-2xl">{task.title}</CardTitle>
             <CardDescription>{task.description}</CardDescription>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDelete(task.id)}
-            aria-label={`Delete memory "${task.title}"`}
-            className="text-muted-foreground hover:text-destructive shrink-0"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
+          { task.created_by === profile?.username &&
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(task.id)}
+              aria-label={`Delete memory "${task.title}"`}
+              className="text-muted-foreground hover:text-destructive shrink-0"
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          }
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
             <div className="flex items-center">
@@ -40,10 +54,10 @@ export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: stri
                 <div className="flex items-center gap-2">
                     <span>Idea by:</span>
                     <Avatar className="h-6 w-6">
-                        <AvatarImage src={creatorAvatarUrl} alt={task.createdBy} />
-                        <AvatarFallback>{task.createdBy.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={createdByProfile?.avatar_url} alt={task.created_by} />
+                        <AvatarFallback>{task.created_by.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{task.createdBy}</span>
+                    <span className="font-medium">{task.created_by}</span>
                 </div>
             </div>
         </div>

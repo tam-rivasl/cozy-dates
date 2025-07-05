@@ -1,4 +1,3 @@
-
 'use client';
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import type { Task } from '@/lib/types';
@@ -21,12 +20,13 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useUser();
+  const { profile } = useUser();
   const { toast } = useToast();
   const { markAsWatched } = useWatchlist();
 
   useEffect(() => {
     const loadTasks = async () => {
+      setIsLoading(true);
       const { data, error } = await supabase.from('tasks').select('*');
       if (error) {
         toast({ variant: "destructive", title: 'Error loading tasks', description: error.message });
@@ -39,10 +39,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const addTask = async (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos'>) => {
-    if (!user) return;
+    if (!profile) return;
     const newTask = {
         ...task,
-        created_by: user,
+        created_by: profile.username,
         completed: false,
         photos: [],
         watchlist_item_id: task.watchlist_item_id || null,

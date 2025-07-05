@@ -1,45 +1,133 @@
 'use client';
 
-import type { UserName as User } from '@/lib/types'; // 'Carlos' | 'Tamara'
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { AuthError, Session, User } from '@supabase/supabase-js';
+import type { Profile } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 interface UserContextType {
   user: User | null;
-  setUser: (user: User | null) => void;
+  profile: Profile | null;
+  session: Session | null;
+  isLoading: boolean;
+  signIn: (email: string, pass: string) => Promise<AuthError | null>;
+  signUp: (email: string, pass: string, username: string, avatar: File) => Promise<AuthError | null>;
+  signOut: () => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
-  // Aplicar tema al cambiar de usuario
-  React.useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('dark');
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      }
+      setIsLoading(false);
+    };
 
-    if (user === 'Carlos') {
-      root.classList.add('theme-carlos');
-      root.classList.remove('theme-tamara');
-    } else if (user === 'Tamara') {
-      root.classList.add('theme-tamara');
-      root.classList.remove('theme-carlos');
-    } else {
-      root.classList.remove('theme-carlos', 'theme-tamara');
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+        if(window.location.pathname === '/login' || window.location.pathname === '/register' || window.location.pathname === '/') {
+          router.push('/dashboard');
+        }
+      } else {
+        setProfile(null);
+        router.push('/login');
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [router]);
+
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error fetching profile:', error);
     }
+    setProfile(data);
+  };
+  
+  const signIn = async (email: string, pass: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    return error;
+  };
 
-    console.log(`User: ${user}, Theme applied.`);
-  }, [user]);
+  const signUp = async (email: string, pass: string, username: string, avatarFile: File) => {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password: pass,
+    });
 
-  return (
-    <UserContext.Provider value={{ user, setUser }}>
-      {children}
-    </UserContext.Provider>
-  );
+    if (authError) return authError;
+    if (!authData.user) return new Error('User not created.');
+    
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
+      .from('avatars')
+      .upload(`public/${authData.user.id}/${avatarFile.name}`, avatarFile);
+
+    if (uploadError) return uploadError;
+    
+    const { data: publicUrlData } = supabase
+      .storage
+      .from('avatars')
+      .getPublicUrl(uploadData.path);
+      
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        username,
+        avatar_url: publicUrlData.publicUrl
+      });
+
+    return profileError;
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const value = {
+    session,
+    user,
+    profile,
+    isLoading,
+    signIn,
+    signOut,
+    signUp,
+  };
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
 export function useUser() {
   const context = useContext(UserContext);
-  if (!context) throw new Error('useUser must be used within a UserProvider');
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
   return context;
 }

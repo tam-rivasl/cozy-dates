@@ -1,5 +1,11 @@
 
-export type UserName = 'Tamara' | 'Carlos';
+export type UserName = string;
+
+export interface Profile {
+  id: string;
+  username: string;
+  avatar_url: string;
+}
 
 export interface MusicNote {
   id: string;

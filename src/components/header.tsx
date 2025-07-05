@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Heart, LogOut, BookHeart, Home, Music, Film, Menu } from 'lucide-react';
 
 import { useUser } from '@/context/UserContext';
@@ -20,19 +20,9 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 export function Header() {
-  const { user, setUser } = useUser();
-  const router = useRouter();
+  const { profile, signOut } = useUser();
   const pathname = usePathname();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const handleLogout = () => {
-    setUser(null);
-    router.push('/');
-  };
-
-  const avatarUrl = user === 'Tamara' 
-    ? "/img/tamara.png" 
-    : "/img/carlos.png";
   
   const navLinks = [
     { href: '/dashboard', label: 'Home', icon: Home },
@@ -80,29 +70,29 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          {user && (
+          {profile && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={avatarUrl} alt={user} />
-                    <AvatarFallback>{user.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={profile.avatar_url} alt={profile.username} />
+                    <AvatarFallback>{profile.username.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Hello, {user}!</p>
+                    <p className="text-sm font-medium leading-none">Hello, {profile.username}!</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       Time to plan something amazing.
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Switch User</span>
+                  <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -1,4 +1,3 @@
-
 'use client';
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import type { MusicNote } from '@/lib/types';
@@ -18,11 +17,12 @@ const MusicContext = createContext<MusicContextType | undefined>(undefined);
 export function MusicProvider({ children }: { children: ReactNode }) {
   const [musicNotes, setMusicNotes] = useState<MusicNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useUser();
+  const { profile } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchNotes = async () => {
+      setIsLoading(true);
       const { data, error } = await supabase.from('music_notes').select('*');
       if (error) {
         toast({ variant: "destructive", title: 'Error loading music notes', description: error.message });
@@ -35,10 +35,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const addMusicNote = async (note: Omit<MusicNote, 'id' | 'added_by'>) => {
-    if (!user) return;
+    if (!profile) return;
+    const newNote = { ...note, added_by: profile.username };
     const { data, error } = await supabase
       .from('music_notes')
-      .insert([{ ...note, added_by: user }])
+      .insert([newNote])
       .select()
       .single();
 

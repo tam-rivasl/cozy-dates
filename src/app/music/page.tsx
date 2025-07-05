@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,7 +18,7 @@ export default function MusicPage() {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.push('/');
+            router.push('/login');
         }
     }, [user, isUserLoading, router]);
 

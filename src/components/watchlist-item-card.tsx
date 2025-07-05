@@ -1,12 +1,14 @@
-
 'use client';
 
-import type { WatchlistItem } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import type { WatchlistItem, Profile } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trash2, User as UserIcon, Clapperboard, Tv, StickyNote, CalendarPlus } from 'lucide-react';
+import { useUser } from '@/context/UserContext';
+import { supabase } from '@/lib/supabase';
 
 interface WatchlistItemCardProps {
   item: WatchlistItem;
@@ -15,8 +17,17 @@ interface WatchlistItemCardProps {
 }
 
 export function WatchlistItemCard({ item, onDelete, onPlanMovieNight }: WatchlistItemCardProps) {
-  const creatorAvatarUrl = item.added_by === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
+  const { profile } = useUser();
+  const [addedByProfile, setAddedByProfile] = useState<Profile | null>(null);
   const isWatched = item.status === 'Watched';
+  
+  useEffect(() => {
+    const getAddedByProfile = async () => {
+      const { data } = await supabase.from('profiles').select('*').eq('username', item.added_by).single();
+      setAddedByProfile(data);
+    }
+    getAddedByProfile();
+  }, [item.added_by]);
 
   return (
     <Card className={`transition-all duration-300 ${isWatched ? 'bg-card/60' : 'bg-card'}`}>
@@ -27,15 +38,17 @@ export function WatchlistItemCard({ item, onDelete, onPlanMovieNight }: Watchlis
               {item.title}
             </CardTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDelete(item.id)}
-            aria-label={`Delete item "${item.title}"`}
-            className="text-muted-foreground hover:text-destructive shrink-0"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
+          { item.added_by === profile?.username &&
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(item.id)}
+              aria-label={`Delete item "${item.title}"`}
+              className="text-muted-foreground hover:text-destructive shrink-0"
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          }
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -49,7 +62,7 @@ export function WatchlistItemCard({ item, onDelete, onPlanMovieNight }: Watchlis
                <div className="flex items-center gap-2">
                 <span>Added by:</span>
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={creatorAvatarUrl} alt={item.added_by} />
+                  <AvatarImage src={addedByProfile?.avatar_url} alt={item.added_by} />
                   <AvatarFallback>{item.added_by.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <span className="font-medium">{item.added_by}</span>

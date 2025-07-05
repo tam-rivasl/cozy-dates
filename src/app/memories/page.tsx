@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useEffect } from 'react';
@@ -16,7 +15,7 @@ export default function MemoriesPage() {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.push('/');
+            router.push('/login');
         }
     }, [user, isUserLoading, router]);
 

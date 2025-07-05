@@ -1,53 +1,50 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
-import type { UserName as User } from '@/lib/types';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
-import { motion } from 'framer-motion';
 
-export default function LoginPage() {
-  const { setUser } = useUser();
+export default function HomePage() {
+  const { user, isLoading } = useUser();
   const router = useRouter();
 
-  const handleUserSelect = (user: User) => {
-    // Guarda el usuario en el contexto
-    setUser(user);
-    // Redirige
-    router.push('/dashboard');
-  };
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return null; // or a loading spinner while redirecting
+  }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-8">
+     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-8">
       <div className="text-center mb-12">
         <Heart className="h-16 w-16 text-primary mx-auto mb-4" />
         <h1 className="text-4xl sm:text-5xl font-headline font-bold">Cozy Dates</h1>
-        <p className="text-muted-foreground text-lg mt-2">Who is planning today?</p>
+        <p className="text-muted-foreground text-lg mt-2">Plan your life together.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
-        {['Tamara', 'Carlos'].map((name) => (
-          <motion.div
-            key={name}
-            whileHover={{ scale: 1.05, y: -10 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          >
-            <Card
-              className="w-full max-w-xs sm:w-64 cursor-pointer transition-all hover:shadow-2xl hover:shadow-primary/20"
-              onClick={() => handleUserSelect(name as User)}
-            >
-              <CardContent className="flex flex-col items-center p-6">
-                <Avatar className="w-32 h-32 mb-4 border-4 border-primary transition-all">
-                  <AvatarImage src={`/img/${name.toLowerCase()}.png`} alt={name} />
-                  <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <h2 className="text-2xl font-headline font-bold">{name}</h2>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+      <div className="flex gap-4">
+        <Button asChild size="lg">
+          <Link href="/login">Login</Link>
+        </Button>
+        <Button asChild variant="outline" size="lg">
+          <Link href="/register">Register</Link>
+        </Button>
       </div>
     </main>
   );
