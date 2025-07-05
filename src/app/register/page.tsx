@@ -32,9 +32,12 @@ export default function RegisterPage() {
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+    },
   });
-
-  const avatarRef = form.register('avatar');
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -123,15 +126,20 @@ export default function RegisterPage() {
               <FormField
                 control={form.control}
                 name="avatar"
-                render={() => (
+                render={({ field: { onChange, onBlur, name, ref } }) => (
                    <FormItem>
                     <FormLabel>Profile Picture</FormLabel>
                      <FormControl>
                        <Input
                          type="file"
                          accept="image/*"
-                         {...avatarRef}
-                         onChange={handleAvatarChange}
+                         ref={ref}
+                         name={name}
+                         onBlur={onBlur}
+                         onChange={(e) => {
+                           onChange(e.target.files);
+                           handleAvatarChange(e);
+                         }}
                        />
                      </FormControl>
                     <FormMessage />
