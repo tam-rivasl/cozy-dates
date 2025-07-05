@@ -29,7 +29,7 @@ import type { WatchlistItem } from '@/lib/types';
 interface AddWatchlistItemDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by'>) => Promise<void>;
+  onAddItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'owner_id'>) => Promise<void>;
 }
 
 const itemSchema = z.object({

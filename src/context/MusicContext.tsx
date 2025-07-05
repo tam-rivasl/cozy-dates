@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 interface MusicContextType {
   musicNotes: MusicNote[];
   isLoading: boolean;
-  addMusicNote: (note: Omit<MusicNote, 'id' | 'added_by'>) => Promise<void>;
+  addMusicNote: (note: Omit<MusicNote, 'id' | 'added_by' | 'owner_id'>) => Promise<void>;
   deleteMusicNote: (id: string) => Promise<void>;
 }
 
@@ -17,7 +17,7 @@ const MusicContext = createContext<MusicContextType | undefined>(undefined);
 export function MusicProvider({ children }: { children: ReactNode }) {
   const [musicNotes, setMusicNotes] = useState<MusicNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { profile } = useUser();
+  const { profile, user } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,9 +34,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     fetchNotes();
   }, [toast]);
 
-  const addMusicNote = async (note: Omit<MusicNote, 'id' | 'added_by'>) => {
-    if (!profile) return;
-    const newNote = { ...note, added_by: profile.username };
+  const addMusicNote = async (note: Omit<MusicNote, 'id' | 'added_by' | 'owner_id'>) => {
+    if (!profile || !user) return;
+    const newNote = { ...note, added_by: profile.username, owner_id: user.id };
     const { data, error } = await supabase
       .from('music_notes')
       .insert([newNote])
