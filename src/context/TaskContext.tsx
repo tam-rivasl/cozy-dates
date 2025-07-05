@@ -1,3 +1,4 @@
+
 'use client';
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import type { Task } from '@/lib/types';
@@ -9,7 +10,7 @@ import { supabase, type SupabaseTask } from '@/lib/supabase';
 interface TaskContextType {
   tasks: Task[];
   isLoading: boolean;
-  addTask: (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'owner_id'>) => Promise<void>;
+  addTask: (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'user_id'>) => Promise<void>;
   toggleComplete: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   addPhoto: (id: string, photoDataUri: string) => Promise<void>;
@@ -38,7 +39,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     loadTasks();
   }, [toast]);
 
-  const addTask = async (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'owner_id'>) => {
+  const addTask = async (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos' | 'user_id'>) => {
     if (!profile || !user) return;
     const newTask = {
         ...task,
@@ -46,7 +47,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         completed: false,
         photos: [],
         watchlist_item_id: task.watchlist_item_id || null,
-        owner_id: user.id
+        user_id: user.id
     };
     
     const { data, error } = await supabase

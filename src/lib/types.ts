@@ -44,5 +44,5 @@ export interface Task {
   notes?: string;
   created_by: UserName;
   watchlist_item_id?: string | null;
-  owner_id: string;
+  user_id: string;
 }
