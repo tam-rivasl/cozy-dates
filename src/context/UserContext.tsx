@@ -80,38 +80,46 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password: pass,
+      options: {
+        data: {
+          username: username,
+        }
+      }
     });
-
+  
     if (authError) return authError;
     if (!authData.user) return new Error('User not created.');
-    
+      
     // 2. Upload the avatar.
-    const { data: uploadData, error: uploadError } = await supabase
+    const fileExt = avatarFile.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `${authData.user.id}/${fileName}`;
+  
+    const { error: uploadError } = await supabase
       .storage
       .from('avatars')
-      .upload(`${authData.user.id}/${avatarFile.name}`, avatarFile, {
+      .upload(filePath, avatarFile, {
         cacheControl: '3600',
-        upsert: true,
+        upsert: true, // Use upsert to overwrite existing avatar
       });
-
+  
     if (uploadError) return uploadError;
-    
+  
     // 3. Get the public URL for the avatar.
     const { data: publicUrlData } = supabase
       .storage
       .from('avatars')
-      .getPublicUrl(uploadData.path);
-      
-    // 4. Update the newly created profile with the correct username and avatar URL.
+      .getPublicUrl(filePath);
+        
+    // 4. Update the newly created profile with the avatar URL.
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
-        username: username,
         avatar_url: publicUrlData.publicUrl,
         updated_at: new Date().toISOString(),
       })
       .eq('id', authData.user.id);
-
+  
     return profileError;
   };
 

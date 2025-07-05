@@ -16,7 +16,7 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
      - Estado de completado.
      - Fotos y notas adicionales.
      - Referencia al propietario (vinculado a `auth.users`).
-   - Políticas RLS que permiten a los usuarios autenticados ver y modificar solo sus propias tareas.
+   - Políticas RLS que permiten a usuarios autenticados ver todas las tareas, pero solo modificar las propias.
 3. **Lista de Seguimiento de Entretenimiento**
    - La tabla `public.watchlist_items` guarda elementos para ver:
      - Películas y series con su título, tipo y estado.
@@ -37,6 +37,8 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
      - Se activa automáticamente cuando se registra un nuevo usuario.
      - Extrae el nombre de usuario de los metadatos.
      - Crea automáticamente un perfil en `public.profiles`.
+7. **Edge Functions para Autenticación**
+    - `sync-tasks` permite sincronizar tareas con servicios externos.
 
 ## Pasos para la migración del frontend
 

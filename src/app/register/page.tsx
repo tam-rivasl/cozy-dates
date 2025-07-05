@@ -36,6 +36,7 @@ export default function RegisterPage() {
       username: '',
       email: '',
       password: '',
+      avatar: undefined,
     },
   });
 
@@ -54,6 +55,36 @@ export default function RegisterPage() {
     setIsLoading(true);
     const { email, password, username, avatar } = data;
     const avatarFile = avatar[0];
+
+    // Client-side validation
+    if (!avatarFile) {
+        toast({
+            variant: "destructive",
+            title: "Avatar Missing",
+            description: "Please select a profile picture.",
+        });
+        setIsLoading(false);
+        return;
+    }
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(avatarFile.type)) {
+        toast({
+            variant: "destructive",
+            title: "Invalid File Type",
+            description: "Please use JPG, PNG, GIF, or WebP.",
+        });
+        setIsLoading(false);
+        return;
+    }
+    if (avatarFile.size > 2 * 1024 * 1024) { // 2MB
+        toast({
+            variant: "destructive",
+            title: "File Too Large",
+            description: "The avatar image must be smaller than 2MB.",
+        });
+        setIsLoading(false);
+        return;
+    }
     
     const error = await signUp(email, password, username, avatarFile);
 
@@ -61,7 +92,7 @@ export default function RegisterPage() {
       toast({
         variant: 'destructive',
         title: 'Registration Failed',
-        description: error.message,
+        description: error.message.includes('permission') ? 'You do not have permission to perform this action.' : error.message,
       });
     } else {
       toast({
