@@ -18,16 +18,12 @@ export default function HomePage() {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) {
+  if (isLoading || user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (user) {
-    return null; // or a loading spinner while redirecting
   }
 
   return (

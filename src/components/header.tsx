@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { ThemeToggle } from './theme-toggle';
 
 export function Header() {
   const { profile, signOut } = useUser();
@@ -70,6 +71,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+            <ThemeToggle />
           {profile && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -98,7 +100,6 @@ export function Header() {
             </DropdownMenu>
           )}
 
-          {/* Mobile Menu */}
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>

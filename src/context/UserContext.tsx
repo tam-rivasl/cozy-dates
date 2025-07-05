@@ -79,6 +79,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password: pass,
+      options: {
+        data: {
+          username: username,
+        }
+      }
     });
 
     if (authError) return authError;
@@ -87,7 +92,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('avatars')
-      .upload(`public/${authData.user.id}/${avatarFile.name}`, avatarFile);
+      .upload(`${authData.user.id}/${avatarFile.name}`, avatarFile, {
+        cacheControl: '3600',
+        upsert: true,
+      });
 
     if (uploadError) return uploadError;
     
@@ -98,11 +106,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       
     const { error: profileError } = await supabase
       .from('profiles')
-      .insert({
-        id: authData.user.id,
-        username,
+      .update({
         avatar_url: publicUrlData.publicUrl
-      });
+      })
+      .eq('id', authData.user.id);
 
     return profileError;
   };
