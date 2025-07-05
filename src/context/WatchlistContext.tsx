@@ -1,10 +1,11 @@
 
 'use client';
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import type { WatchlistItem } from '@/lib/types';
+
 import { useUser } from '@/context/UserContext';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/lib/supabase';
+import { WatchlistItem } from '@/lib/types';
 
 interface WatchlistContextType {
   watchlistItems: WatchlistItem[];
@@ -25,6 +26,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchItems = async () => {
       const { data, error } = await supabase.from('watchlist_items').select('*');
+      console.log("Data: ", data, "error: ", error)
       if (error) {
         toast({ variant: "destructive", title: 'Error loading watchlist', description: error.message });
       } else {
