@@ -22,6 +22,7 @@ import { ThemeToggle } from './theme-toggle';
 import { EditProfileDialog } from './edit-profile-dialog';
 import { ManagePartnerDialog } from './manage-partner-dialog';
 import { ScrollArea } from './ui/scroll-area';
+import { Separator } from './ui/separator';
 
 export function Header() {
   const { profile, signOut } = useUser();
