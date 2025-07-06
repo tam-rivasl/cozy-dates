@@ -201,9 +201,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const invitePartner = async (email: string) => {
-    const { error } = await supabase.functions.invoke('invite-partner', { body: { invitee_email: email } });
+    if (!session) return;
+    const { error } = await supabase.functions.invoke('invite-partner', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: { invitee_email: email },
+    });
     if (error) {
-        toast({ title: 'Invitation Failed', description: error.message, variant: 'destructive' });
+        toast({ title: 'Invitation Failed', description: "Failed to send a request to the Edge Function", variant: 'destructive' });
     } else {
         toast({ title: 'Invitation Sent!', description: `Your invitation to ${email} has been sent.` });
         await fetchInvitations(user!.email!, user!.id);
@@ -211,9 +215,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const acceptInvitation = async (id: string) => {
-    const { error } = await supabase.functions.invoke('accept-invitation', { body: { invitation_id: id } });
+    if (!session) return;
+    const { error } = await supabase.functions.invoke('accept-invitation', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: { invitation_id: id },
+    });
      if (error) {
-        toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
+        toast({ title: 'Failed to Accept', description: "Failed to send a request to the Edge Function", variant: 'destructive' });
     } else {
         toast({ title: 'Invitation Accepted!', description: "You are now paired!" });
         if(user) {
@@ -225,9 +233,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
   
   const declineInvitation = async (id: string) => {
-      const { error } = await supabase.functions.invoke('decline-invitation', { body: { invitation_id: id } });
+      if (!session) return;
+      const { error } = await supabase.functions.invoke('decline-invitation', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { invitation_id: id },
+      });
       if (error) {
-          toast({ title: 'Action Failed', description: error.message, variant: 'destructive' });
+          toast({ title: 'Action Failed', description: "Failed to send a request to the Edge Function", variant: 'destructive' });
       } else {
           toast({ title: 'Invitation Declined', variant: 'destructive' });
           await fetchInvitations(user!.email!, user!.id);
@@ -235,9 +247,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
   
   const unpair = async () => {
-      const { error } = await supabase.functions.invoke('unpair-partner');
+      if (!session) return;
+      const { error } = await supabase.functions.invoke('unpair-partner', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
        if (error) {
-          toast({ title: 'Failed to Unpair', description: error.message, variant: 'destructive' });
+          toast({ title: 'Failed to Unpair', description: "Failed to send a request to the Edge Function", variant: 'destructive' });
       } else {
           toast({ title: 'Successfully Unpaired', variant: 'destructive' });
           setPartnerProfile(null);
