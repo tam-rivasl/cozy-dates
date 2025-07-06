@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -11,10 +12,11 @@ import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
 import { GoalsSummary } from '@/components/goals-summary';
 import { useTasks } from '@/context/TaskContext';
+import { DateSuggester } from '@/components/date-suggester';
 
 export default function DashboardPage() {
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-  const { user, isLoading: isUserLoading, logout } = useUser();
+  const { user, isLoading: isUserLoading } = useUser();
   const { tasks, isLoading: areTasksLoading, addTask, toggleComplete, deleteTask, addPhoto } = useTasks();
   const router = useRouter();
 
@@ -48,10 +50,13 @@ export default function DashboardPage() {
       <main className="flex-1 p-4 md:p-8">
         <div className="flex flex-col items-start gap-4 mb-6 sm:flex-row sm:justify-between sm:items-center">
           <h1 className="text-3xl md:text-4xl font-headline">Our Shared Plans</h1>
-          <Button onClick={() => setAddDialogOpen(true)}>
-            <PlusCircle className="mr-2" />
-            Add Plan
-          </Button>
+          <div className="flex gap-2">
+            <DateSuggester />
+            <Button onClick={() => setAddDialogOpen(true)}>
+              <PlusCircle className="mr-2" />
+              Add Plan
+            </Button>
+          </div>
         </div>
 
         <AddTaskDialog

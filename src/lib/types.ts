@@ -17,6 +17,7 @@ export interface CoupleInvitation {
   inviter_id: string;
   invitee_email: string;
   status: CoupleInvitationStatus;
+  profiles: Profile; // Para obtener el nombre del invitador
 }
 
 
