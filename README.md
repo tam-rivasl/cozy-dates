@@ -24,7 +24,7 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
     *   La tabla `public.tasks` almacena tareas con:
         *   Título, descripción, fecha, categoría y prioridad.
         *   Referencia al `user_id` del creador.
-    *   Las políticas RLS permiten a un usuario ver sus tareas y las de su pareja (`user_id = auth.uid() OR user_id = get_partner_id()`), pero solo crear, modificar o eliminar las propias.
+    *   Las políticas RLS permiten a un usuario ver sus tareas y las de su pareja (`user_id = auth.uid() OR user_id = (SELECT partner_id FROM public.profiles WHERE id = auth.uid())`), pero solo crear, modificar o eliminar las propias.
 
 4.  **Lista de Seguimiento y Notas Musicales Compartidas**
     *   Las tablas `public.watchlist_items` y `public.music_notes` siguen la misma lógica que las tareas.
@@ -36,7 +36,6 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
 
 6.  **Automatización con Triggers y Funciones SQL**
     *   Se creó una función `handle_new_user()` y un trigger que crea automáticamente un perfil en `public.profiles` cuando se registra un nuevo usuario.
-    *   Se implementó una función `get_partner_id()` para simplificar las políticas RLS, permitiendo a las reglas de la base de datos encontrar fácilmente el ID de la pareja del usuario actual.
     *   Se crearon funciones RPC (`link_partners`, `unlink_partners`) para manejar la lógica de emparejamiento de forma atómica y segura.
 
 ## Pasos para la migración del frontend
@@ -52,10 +51,10 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
         NEXT_PUBLIC_SUPABASE_URL=TU_URL_DE_SUPABASE
         NEXT_PUBLIC_SUPABASE_ANON_KEY=TU_CLAVE_ANONIMA
         ```
-3.  **Ejecutar la migración SQL**:
+3.  **Ejecutar las migraciones SQL**:
     *   En tu panel de Supabase, ve al **SQL Editor**.
-    *   Copia todo el contenido de `supabase/migrations/0000_initial_schema.sql`.
-    *   Pega el contenido en una nueva consulta y haz clic en **"RUN"**. Esto creará todas las tablas, funciones, triggers y políticas de seguridad necesarias.
+    *   **Paso 1: Schema Inicial.** Copia todo el contenido de `supabase/migrations/0000_initial_schema.sql`. Pega el contenido en una nueva consulta y haz clic en **"RUN"**. Esto creará todas las tablas y políticas de seguridad.
+    *   **Paso 2: Funciones y Triggers.** Copia el contenido de `supabase/migrations/0001_functions_and_triggers.sql`. Pega el contenido en una nueva consulta y haz clic en **"RUN"**. Esto añadirá la lógica automatizada a tu base de datos.
 4. **Desplegar Edge Functions**:
    * Sigue la documentación de Supabase para desplegar las Edge Functions que se encuentran en la carpeta `supabase/functions`. Necesitarás desplegar las carpetas:
      * `invite-partner`
