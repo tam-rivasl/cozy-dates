@@ -11,7 +11,7 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
         *   URLs de avatares.
         *   Un `partner_id` (UUID) que vincula a dos perfiles para formar una pareja.
         *   Timestamp de última actualización.
-    *   La tabla está protegida con RLS para que los perfiles sean visibles públicamente para usuarios autenticados, pero solo editables por sus propietarios.
+    *   La tabla está protegida con RLS para que los perfiles sean visibles para el usuario autenticado y su pareja, pero solo editables por sus propietarios.
 
 2.  **Sistema de Emparejamiento de Parejas**
     *   Se creó una tabla `public.couple_invitations` para gestionar las invitaciones.
