@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -22,12 +23,6 @@ export default function WatchlistPage() {
 
     const [isAddPlanDialogOpen, setAddPlanDialogOpen] = useState(false);
     const [initialPlanData, setInitialPlanData] = useState<any>();
-
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.push('/login');
-        }
-    }, [user, isUserLoading, router]);
 
     const handlePlanMovieNight = (item: WatchlistItem) => {
         setInitialPlanData({

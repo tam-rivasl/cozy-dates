@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useEffect } from 'react';
@@ -12,12 +13,6 @@ export default function MemoriesPage() {
     const { user, isLoading: isUserLoading } = useUser();
     const { tasks, isLoading: areTasksLoading, deleteTask } = useTasks();
     const router = useRouter();
-
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.push('/login');
-        }
-    }, [user, isUserLoading, router]);
 
     const memories = useMemo(() => {
         return tasks

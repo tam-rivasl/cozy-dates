@@ -20,12 +20,6 @@ export default function DashboardPage() {
   const { tasks, isLoading: areTasksLoading, addTask, toggleComplete, deleteTask, addPhoto } = useTasks();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
-
   const { upcomingTasks, completedTasks } = useMemo(() => {
     const upcoming = tasks
       .filter((task) => !task.completed)

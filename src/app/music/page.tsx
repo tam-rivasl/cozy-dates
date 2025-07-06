@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,12 +16,6 @@ export default function MusicPage() {
     const { musicNotes, isLoading: areNotesLoading, addMusicNote, deleteMusicNote } = useMusic();
     const router = useRouter();
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-
-    useEffect(() => {
-        if (!isUserLoading && !user) {
-            router.push('/login');
-        }
-    }, [user, isUserLoading, router]);
 
     if (isUserLoading || areNotesLoading || !user) {
         return (

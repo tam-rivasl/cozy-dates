@@ -46,10 +46,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
       .eq('id', userId)
       .single();
 
-    if (error && error.code !== 'PGRST116') console.error('Error fetching profile:', error);
+    if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+        toast({
+            title: 'Error fetching profile',
+            description: 'Could not retrieve your profile information. Please try again later.',
+            variant: 'destructive',
+        });
+    }
     setProfile(data);
     return data;
-  }, []);
+  }, [toast]);
 
   const fetchPartnerProfile = useCallback(async (partnerId: string) => {
     const { data, error } = await supabase
@@ -69,14 +76,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (!userEmail) return;
      const { data, error } = await supabase
       .from('couple_invitations')
-      .select('*, profiles (id, username, avatar_url)')
+      .select('*, profiles!inviter_id (id, username, avatar_url)')
       .or(`invitee_email.eq.${userEmail},inviter_id.eq.${userId}`)
       .eq('status', 'pending');
       
     if (error) {
         toast({ title: 'Error fetching invitations', description: error.message, variant: 'destructive' });
     } else {
-        setInvitations(data.filter(inv => inv.invitee_email === userEmail));
+        setInvitations(data.filter(inv => inv.invitee_email === userEmail) as any[] | CoupleInvitation[]);
         setSentInvitation(data.find(inv => inv.inviter_id === userId) || null);
     }
   }, [toast]);
@@ -124,7 +131,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setPartnerProfile(null);
             setInvitations([]);
             setSentInvitation(null);
-            router.push('/login');
+            router.push('/');
         }
     });
 
@@ -181,6 +188,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    router.push('/');
   };
 
   const updateProfile = async (username: string, avatarFile: File | null) => {
@@ -207,7 +215,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       body: { invitee_email: email },
     });
     if (error) {
-        toast({ title: 'Invitation Failed', description: "Failed to send a request to the Edge Function", variant: 'destructive' });
+        toast({ title: 'Invitation Failed', description: error.message, variant: 'destructive' });
     } else {
         toast({ title: 'Invitation Sent!', description: `Your invitation to ${email} has been sent.` });
         await fetchInvitations(user!.email!, user!.id);
@@ -221,7 +229,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       body: { invitation_id: id },
     });
      if (error) {
-        toast({ title: 'Failed to Accept', description: "Failed to send a request to the Edge Function", variant: 'destructive' });
+        toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
     } else {
         toast({ title: 'Invitation Accepted!', description: "You are now paired!" });
         if(user) {
@@ -239,7 +247,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         body: { invitation_id: id },
       });
       if (error) {
-          toast({ title: 'Action Failed', description: "Failed to send a request to the Edge Function", variant: 'destructive' });
+          toast({ title: 'Action Failed', description: error.message, variant: 'destructive' });
       } else {
           toast({ title: 'Invitation Declined', variant: 'destructive' });
           await fetchInvitations(user!.email!, user!.id);
@@ -252,7 +260,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
        if (error) {
-          toast({ title: 'Failed to Unpair', description: "Failed to send a request to the Edge Function", variant: 'destructive' });
+          toast({ title: 'Failed to Unpair', description: error.message, variant: 'destructive' });
       } else {
           toast({ title: 'Successfully Unpaired', variant: 'destructive' });
           setPartnerProfile(null);
