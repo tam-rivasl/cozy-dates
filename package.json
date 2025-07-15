@@ -6,14 +6,15 @@
     "dev": "next dev --turbopack -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "next build",
+    "build": "npm run supabase:db:push && next build",
     "start": "next start",
     "lint": "echo 'skip lint'",
     "test": "echo 'No tests'",
     "typecheck": "tsc --noEmit",
     "supabase:db:push": "supabase db push",
     "supabase:functions:deploy": "supabase functions deploy invite-partner accept-invitation decline-invitation unpair-partner sync-tasks",
-    "supabase:deploy": "npm run supabase:db:push && npm run supabase:functions:deploy"
+    "supabase:deploy": "npm run supabase:db:push && npm run supabase:functions:deploy",
+    "dev:db": "supabase start -d && npm run supabase:db:push && next dev --turbopack -p 9002"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.13.0",

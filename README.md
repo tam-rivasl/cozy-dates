@@ -67,5 +67,14 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
      npm run supabase:deploy
      ```
    * Este comando enviará las migraciones y publicará las funciones anteriores en tu proyecto.
+6. **Compilar con base de datos local**:
+   * Para que la base de datos se inicie y se sincronice automáticamente durante el desarrollo, ejecuta:
+     ```bash
+     npm run dev:db
+     ```
+   * Al compilar la aplicación de producción se aplicarán las migraciones automáticamente con:
+     ```bash
+     npm run build
+     ```
 
 ¡Con estos pasos, tu aplicación estará lista y conectada a tu backend de Supabase!
