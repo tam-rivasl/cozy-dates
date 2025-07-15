@@ -28,7 +28,7 @@ import type { MusicNote } from '@/lib/types';
 interface AddMusicNoteDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddItem: (item: Omit<MusicNote, 'id' | 'added_by' | 'owner_id'>) => Promise<void>;
+  onAddItem: (item: Omit<MusicNote, 'id' | 'added_by' | 'user_id' | 'created_at'>) => Promise<void>;
 }
 
 const itemSchema = z.object({

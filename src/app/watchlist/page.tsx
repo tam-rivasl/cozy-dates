@@ -1,12 +1,8 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useUser } from '@/context/UserContext';
-import { useRouter } from 'next/navigation';
-import { useWatchlist } from '@/context/WatchlistContext';
-import { useTasks } from '@/context/TaskContext';
-import type { WatchlistItem } from '@/lib/types';
+import { useState, useMemo } from 'react';
+import type { WatchlistItem, Task } from '@/lib/types';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { AddWatchlistItemDialog } from '@/components/add-watchlist-item-dialog';
@@ -14,20 +10,48 @@ import { WatchlistItemCard } from '@/components/watchlist-item-card';
 import { Film, PlusCircle, Loader2, Video } from 'lucide-react';
 import { AddTaskDialog } from '@/components/add-task-dialog';
 
-export default function WatchlistPage() {
-    const { user, isLoading: isUserLoading } = useUser();
-    const { watchlistItems, isLoading: areItemsLoading, addWatchlistItem, deleteWatchlistItem } = useWatchlist();
-    const { addTask } = useTasks();
-    const router = useRouter();
-    const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+// Mock Data - Replace with your local data fetching logic
+const mockWatchlistItems: WatchlistItem[] = [
+    { id: '1', title: 'The Bear', type: 'Series', status: 'To Watch', notes: 'Heard great things!', added_by: 'Tamara', user_id: '1', created_at: new Date().toISOString() },
+    { id: '2', title: 'Dune: Part Two', type: 'Movie', status: 'To Watch', notes: 'Let\'s see it on a big screen.', added_by: 'Carlos', user_id: '2', created_at: new Date().toISOString() },
+    { id: '3', title: 'Shōgun', type: 'Series', status: 'Watched', notes: 'Amazing cinematography.', added_by: 'Carlos', user_id: '2', created_at: new Date().toISOString() },
+];
 
+
+export default function WatchlistPage() {
+    const [watchlistItems, setWatchlistItems] = useState<WatchlistItem[]>(mockWatchlistItems);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+    
     const [isAddPlanDialogOpen, setAddPlanDialogOpen] = useState(false);
     const [initialPlanData, setInitialPlanData] = useState<any>();
 
+    const addWatchlistItem = async (item: Omit<WatchlistItem, 'id' | 'status' | 'added_by' | 'user_id' | 'created_at'>) => {
+        const newItem: WatchlistItem = {
+            ...item,
+            id: Math.random().toString(),
+            status: 'To Watch',
+            added_by: 'CurrentUser', // Replace with actual user
+            user_id: '1', // Replace with actual user ID
+            created_at: new Date().toISOString(),
+        };
+        setWatchlistItems(prev => [newItem, ...prev]);
+    };
+
+    const deleteWatchlistItem = async (id: string) => {
+        setWatchlistItems(prev => prev.filter(i => i.id !== id));
+    };
+
+    const addTask = async (task: Omit<Task, 'id' | 'completed' | 'created_by' | 'photos'| 'user_id' | 'created_at'>) => {
+        console.log("Adding movie night task:", task);
+        // This is where you'd call your local API to add the task
+        // and potentially mark the watchlist item as watched.
+    };
+
     const handlePlanMovieNight = (item: WatchlistItem) => {
         setInitialPlanData({
-            title: item.title,
-            description: 'Dia de pelis',
+            title: `Watch "${item.title}"`,
+            description: `Movie night for ${item.title}.`,
             notes: item.notes,
             category: 'Movie Day',
             watchlist_item_id: item.id,
@@ -42,7 +66,7 @@ export default function WatchlistPage() {
     }, [watchlistItems]);
 
 
-    if (isUserLoading || areItemsLoading || !user) {
+    if (isLoading) {
         return (
           <div className="flex items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />

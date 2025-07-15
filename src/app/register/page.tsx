@@ -13,7 +13,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Heart, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/context/UserContext';
 
 const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters long.'),
@@ -25,7 +24,6 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const { signUp } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -54,8 +52,7 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
-    const { email, password, username, avatar } = data;
-    const avatarFile = avatar[0];
+    const avatarFile = data.avatar[0];
 
     if (!avatarFile) {
         toast({
@@ -97,28 +94,26 @@ export default function RegisterPage() {
       
       const compressedFile = await imageCompression(avatarFile, options);
       
-      const error = await signUp(email, password, username, compressedFile);
+      // Replace with your local registration logic
+      console.log('Registering user:', data.username, data.email);
+      console.log('Compressed avatar:', compressedFile);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: 'Registration Successful!',
+        description: "Welcome to Cozy Dates! Please check your email to confirm your account.",
+      });
+      router.push('/login');
 
-      if (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Registration Failed',
-          description: error.message.includes('permission') ? 'You do not have permission to perform this action.' : error.message,
-        });
-      } else {
-        toast({
-          title: 'Registration Successful!',
-          description: "Welcome to Cozy Dates! Please check your email to confirm your account.",
-        });
-        router.push('/login');
-      }
-    } catch (compressionError) {
+    } catch (error: any) {
        toast({
           variant: 'destructive',
-          title: 'Image Processing Error',
-          description: 'Could not process the image. Please try a different one.',
+          title: 'Registration Failed',
+          description: error.message || 'Could not process the image. Please try a different one.',
         });
-        console.error('Image compression error:', compressionError);
+        console.error('Registration or compression error:', error);
     } finally {
         setIsLoading(false);
     }

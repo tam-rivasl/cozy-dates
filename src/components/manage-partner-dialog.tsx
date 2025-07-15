@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUser } from '@/context/UserContext';
 import {
   Dialog,
   DialogContent,
@@ -24,13 +23,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Send, User, X, Check } from 'lucide-react';
+import { Loader2, Send, Check, X } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import type { Profile, CoupleInvitation } from '@/lib/types';
 
 interface ManagePartnerDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  profile: Profile | null;
+  partnerProfile: Profile | null;
 }
 
 const inviteSchema = z.object({
@@ -39,19 +41,13 @@ const inviteSchema = z.object({
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
 
-export function ManagePartnerDialog({ isOpen, onOpenChange }: ManagePartnerDialogProps) {
-  const { 
-    profile, 
-    partnerProfile, 
-    invitations, 
-    sentInvitation,
-    invitePartner, 
-    acceptInvitation, 
-    declineInvitation, 
-    unpair 
-  } = useUser();
+export function ManagePartnerDialog({ isOpen, onOpenChange, profile, partnerProfile }: ManagePartnerDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Mock data, replace with state from your local data fetching
+  const [invitations, setInvitations] = useState<CoupleInvitation[]>([]);
+  const [sentInvitation, setSentInvitation] = useState<CoupleInvitation | null>(null);
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
@@ -60,26 +56,36 @@ export function ManagePartnerDialog({ isOpen, onOpenChange }: ManagePartnerDialo
 
   const handleInvite = async (values: InviteFormValues) => {
     setIsLoading(true);
-    await invitePartner(values.email);
+    console.log('Inviting partner:', values.email);
+    // Replace with local API call logic
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    toast({ title: 'Invitation Sent!', description: `Your invitation to ${values.email} has been sent.` });
     form.reset();
     setIsLoading(false);
+    // You might want to update sentInvitation state here
   };
-
+  
   const handleAccept = async (id: string) => {
-    await acceptInvitation(id);
+    console.log('Accepting invitation:', id);
+    // Replace with local API call logic
+    toast({ title: 'Invitation Accepted!', description: "You are now paired!" });
   }
   
   const handleDecline = async (id: string) => {
-    await declineInvitation(id);
+    console.log('Declining invitation:', id);
+    // Replace with local API call logic
+    toast({ title: 'Invitation Declined', variant: 'destructive' });
   }
 
   const handleUnpair = async () => {
     const confirmed = window.confirm("Are you sure you want to unpair? This action cannot be undone.");
     if (confirmed) {
-        await unpair();
+        console.log('Unpairing...');
+        // Replace with local API call logic
+        toast({ title: 'Successfully Unpaired', variant: 'destructive' });
     }
   }
-
+  
   const renderContent = () => {
     if (partnerProfile) {
       return (
@@ -128,7 +134,7 @@ export function ManagePartnerDialog({ isOpen, onOpenChange }: ManagePartnerDialo
                 <DialogDescription className="mb-4">You have a pending invitation sent to:</DialogDescription>
                 <div className="flex items-center justify-between p-4 rounded-md border bg-accent/50">
                     <p className="font-semibold">{sentInvitation.invitee_email}</p>
-                    <Button variant="destructive" size="sm" onClick={() => declineInvitation(sentInvitation.id)}>Cancel</Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDecline(sentInvitation.id)}>Cancel</Button>
                 </div>
             </div>
         )
@@ -165,7 +171,6 @@ export function ManagePartnerDialog({ isOpen, onOpenChange }: ManagePartnerDialo
       </>
     );
   };
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

@@ -1,18 +1,21 @@
 
 'use client';
 
-import { useMemo, useEffect } from 'react';
-import { useTasks } from '@/context/TaskContext';
-import { useUser } from '@/context/UserContext';
+import { useMemo, useState } from 'react';
+import type { Task } from '@/lib/types';
 import { Header } from '@/components/header';
 import { MemoryCard } from '@/components/memory-card';
 import { BookHeart, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+
+// Mock Data - Replace with your local data fetching logic
+const mockTasks: Task[] = [
+    { id: '4', title: 'Picnic in the Park', description: 'Enjoy the sunny weather.', date: new Date('2024-07-20T13:00:00'), category: 'Date Night', priority: 'Medium', completed: true, created_by: 'Carlos', user_id: '2', created_at: new Date().toISOString(), photos: ['https://placehold.co/600x400.png', 'https://placehold.co/600x400.png'] },
+    { id: '5', title: 'Museum Visit', description: 'Visited the new art exhibit.', date: new Date('2024-06-15T15:00:00'), category: 'Special Event', priority: 'Low', completed: true, created_by: 'Tamara', user_id: '1', created_at: new Date().toISOString(), photos: ['https://placehold.co/600x400.png'] },
+];
 
 export default function MemoriesPage() {
-    const { user, isLoading: isUserLoading } = useUser();
-    const { tasks, isLoading: areTasksLoading, deleteTask } = useTasks();
-    const router = useRouter();
+    const [tasks, setTasks] = useState<Task[]>(mockTasks);
+    const [isLoading, setIsLoading] = useState(false);
 
     const memories = useMemo(() => {
         return tasks
@@ -20,7 +23,11 @@ export default function MemoriesPage() {
             .sort((a, b) => b.date.getTime() - a.date.getTime());
     }, [tasks]);
 
-    if (isUserLoading || areTasksLoading || !user) {
+    const deleteTask = (id: string) => {
+        setTasks(prev => prev.filter(t => t.id !== id));
+    };
+
+    if (isLoading) {
         return (
           <div className="flex items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />

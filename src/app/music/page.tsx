@@ -1,23 +1,42 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useUser } from '@/context/UserContext';
-import { useRouter } from 'next/navigation';
-import { useMusic } from '@/context/MusicContext';
+import { useState } from 'react';
+import type { MusicNote } from '@/lib/types';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { AddMusicNoteDialog } from '@/components/add-music-note-dialog';
 import { MusicNoteCard } from '@/components/music-note-card';
 import { Music, PlusCircle, Loader2 } from 'lucide-react';
 
+// Mock Data - Replace with your local data fetching logic
+const mockMusicNotes: MusicNote[] = [
+    { id: '1', title: 'Our Summer Jam', notes: 'This song always reminds me of our first road trip!', playlist_url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M', added_by: 'Tamara', user_id: '1', created_at: new Date().toISOString() },
+    { id: '2', title: 'Cozy Evening Mix', notes: 'Perfect for a quiet night in.', playlist_url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M', added_by: 'Carlos', user_id: '2', created_at: new Date().toISOString() },
+];
+
+
 export default function MusicPage() {
-    const { user, isLoading: isUserLoading } = useUser();
-    const { musicNotes, isLoading: areNotesLoading, addMusicNote, deleteMusicNote } = useMusic();
-    const router = useRouter();
+    const [musicNotes, setMusicNotes] = useState<MusicNote[]>(mockMusicNotes);
+    const [isLoading, setIsLoading] = useState(false);
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
-    if (isUserLoading || areNotesLoading || !user) {
+    const addMusicNote = async (note: Omit<MusicNote, 'id' | 'added_by' | 'user_id' | 'created_at'>) => {
+        const newNote: MusicNote = {
+            ...note,
+            id: Math.random().toString(),
+            added_by: 'CurrentUser', // Replace with actual user
+            user_id: '1', // Replace with actual user ID
+            created_at: new Date().toISOString(),
+        };
+        setMusicNotes(prev => [newNote, ...prev]);
+    };
+
+    const deleteMusicNote = async (id: string) => {
+        setMusicNotes(prev => prev.filter(n => n.id !== id));
+    };
+
+    if (isLoading) {
         return (
           <div className="flex items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />

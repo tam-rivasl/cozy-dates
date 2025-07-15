@@ -38,29 +38,30 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
     *   Se creó una función `handle_new_user()` y un trigger que crea automáticamente un perfil en `public.profiles` cuando se registra un nuevo usuario.
     *   Se crearon funciones RPC (`link_partners`, `unlink_partners`) para manejar la lógica de emparejamiento de forma atómica y segura.
 
-## Pasos para la migración del frontend
+## Pasos para la configuración del backend local con Supabase CLI
 
-1.  **Obtener las credenciales de Supabase**:
-    *   Ve a tu panel de Supabase.
-    *   En la configuración del proyecto, busca la sección de API.
-    *   Copia la **URL del proyecto** y la **clave pública anónima (anon public key)**.
-2.  **Configurar el entorno**:
-    *   Crea un archivo `.env` en la raíz de tu proyecto si no existe.
-    *   Añade las siguientes líneas, reemplazando los valores con tus credenciales:
+1.  **Instalar Supabase CLI**:
+    *   Sigue las instrucciones oficiales para [instalar la CLI de Supabase](https://supabase.com/docs/guides/cli) en tu sistema.
+
+2.  **Iniciar Supabase localmente**:
+    *   Desde la raíz de este proyecto, ejecuta el siguiente comando:
+        ```bash
+        supabase start
         ```
-        NEXT_PUBLIC_SUPABASE_URL=TU_URL_DE_SUPABASE
-        NEXT_PUBLIC_SUPABASE_ANON_KEY=TU_CLAVE_ANONIMA
+    *   Este comando iniciará los contenedores de Docker necesarios para Supabase. Al finalizar, te proporcionará las **credenciales locales**, incluyendo la URL y la `anon_key`.
+
+3.  **Aplicar las migraciones**:
+    *   Con Supabase corriendo, aplica las migraciones de la base de datos con el siguiente comando:
+        ```bash
+        supabase db reset
         ```
-3.  **Ejecutar las migraciones SQL**:
-    *   En tu panel de Supabase, ve al **SQL Editor**.
-    *   **Paso 1: Schema Inicial.** Copia todo el contenido de `supabase/migrations/0000_initial_schema.sql`. Pega el contenido en una nueva consulta y haz clic en **"RUN"**. Esto creará todas las tablas y políticas de seguridad.
-    *   **Paso 2: Funciones y Triggers.** Copia el contenido de `supabase/migrations/0001_functions_and_triggers.sql`. Pega el contenido en una nueva consulta y haz clic en **"RUN"**. Esto añadirá la lógica automatizada a tu base de datos.
+    *   Esto ejecutará todos los scripts SQL que se encuentran en la carpeta `supabase/migrations` en el orden correcto.
+
 4. **Desplegar Edge Functions**:
-   * Sigue la documentación de Supabase para desplegar las Edge Functions que se encuentran en la carpeta `supabase/functions`. Necesitarás desplegar las carpetas:
-     * `invite-partner`
-     * `accept-invitation`
-     * `decline-invitation`
-     * `unpair-partner`
-     * `sync-tasks`
+   * Despliega las funciones que se encuentran en la carpeta `supabase/functions` con el siguiente comando:
+     ```bash
+     supabase functions deploy --no-verify-jwt
+     ```
+   * El flag `--no-verify-jwt` es útil para el desarrollo local.
 
-¡Con estos pasos, tu aplicación estará lista y conectada a tu backend de Supabase!
+¡Con estos pasos, tu backend de Supabase estará corriendo localmente y listo para que conectes tu aplicación frontend!

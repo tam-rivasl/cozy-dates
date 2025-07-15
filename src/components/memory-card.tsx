@@ -9,19 +9,23 @@ import { CalendarDays, User, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Button } from './ui/button';
-import { useUser } from '@/context/UserContext';
-import { supabase } from '@/lib/supabase';
+
+// Mock data - replace with your local data fetching
+const mockProfiles: { [key: string]: Profile } = {
+  'Tamara': { id: '1', username: 'Tamara', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '2' },
+  'Carlos': { id: '2', username: 'Carlos', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '1' },
+  'CurrentUser': { id: '1', username: 'Tamara', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '2' },
+};
 
 export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: string) => void }) {
-  const { profile } = useUser();
   const [createdByProfile, setCreatedByProfile] = useState<Profile | null>(null);
   
+  // This would be your auth user's profile
+  const profile = mockProfiles['CurrentUser'];
+
   useEffect(() => {
-    const getCreatorProfile = async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('username', task.created_by).single();
-      setCreatedByProfile(data);
-    }
-    getCreatorProfile();
+    // In a real app, you might fetch this profile if it's not already loaded
+    setCreatedByProfile(mockProfiles[task.created_by] || null);
   }, [task.created_by]);
 
   return (

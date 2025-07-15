@@ -5,25 +5,30 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trash2, User, ExternalLink, MessageSquareQuote } from 'lucide-react';
-import { useUser } from '@/context/UserContext';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface MusicNoteCardProps {
   note: MusicNote;
   onDelete: (id: string) => void;
 }
 
+// Mock data - replace with your local data fetching
+const mockProfiles: { [key: string]: Profile } = {
+  'Tamara': { id: '1', username: 'Tamara', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '2' },
+  'Carlos': { id: '2', username: 'Carlos', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '1' },
+  'CurrentUser': { id: '1', username: 'Tamara', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '2' },
+};
+
+
 export function MusicNoteCard({ note, onDelete }: MusicNoteCardProps) {
-  const { profile } = useUser();
   const [addedByProfile, setAddedByProfile] = useState<Profile | null>(null);
+
+  // This would be your auth user's profile
+  const profile = mockProfiles['CurrentUser'];
   
   useEffect(() => {
-    const getAddedByProfile = async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('username', note.added_by).single();
-      setAddedByProfile(data);
-    }
-    getAddedByProfile();
+    // In a real app, you might fetch this profile if it's not already loaded
+    setAddedByProfile(mockProfiles[note.added_by] || null);
   }, [note.added_by]);
 
   return (

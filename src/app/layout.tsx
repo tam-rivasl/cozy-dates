@@ -1,10 +1,6 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { UserProvider } from '@/context/UserContext';
-import { TaskProvider } from '@/context/TaskContext';
-import { WatchlistProvider } from '@/context/WatchlistContext';
-import { MusicProvider } from '@/context/MusicContext';
 
 export const metadata: Metadata = {
   title: 'Cozy Dates',
@@ -26,16 +22,8 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased bg-background text-foreground">
-        <UserProvider>
-          <WatchlistProvider>
-            <TaskProvider>
-              <MusicProvider>
-                {children}
-                <Toaster />
-              </MusicProvider>
-            </TaskProvider>
-          </WatchlistProvider>
-        </UserProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );

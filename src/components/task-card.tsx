@@ -11,8 +11,6 @@ import { CalendarDays, Tag, Flag, Trash2, User, Camera, StickyNote } from 'lucid
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from '@/context/UserContext';
-import { supabase } from '@/lib/supabase';
 
 interface TaskCardProps {
   task: Task;
@@ -21,9 +19,19 @@ interface TaskCardProps {
   onAddPhoto: (id: string, photoDataUri: string) => void;
 }
 
+// Mock data - replace with your local data fetching
+const mockProfiles: { [key: string]: Profile } = {
+  'Tamara': { id: '1', username: 'Tamara', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '2' },
+  'Carlos': { id: '2', username: 'Carlos', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '1' },
+  'CurrentUser': { id: '1', username: 'Tamara', avatar_url: 'https://placehold.co/100x100.png', updated_at: '', partner_id: '2' },
+};
+
+
 export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskCardProps) {
-  const { profile } = useUser();
   const [createdByProfile, setCreatedByProfile] = useState<Profile | null>(null);
+  
+  // This would be your auth user's profile
+  const profile = mockProfiles['CurrentUser'];
 
   const priorityColors = {
     High: 'bg-red-500/80 hover:bg-red-500',
@@ -32,11 +40,8 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
   };
 
   useEffect(() => {
-    const getCreatorProfile = async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('username', task.created_by).single();
-      setCreatedByProfile(data);
-    }
-    getCreatorProfile();
+    // In a real app, you might fetch this profile if it's not already loaded
+    setCreatedByProfile(mockProfiles[task.created_by] || null);
   }, [task.created_by]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +68,7 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
     reader.onloadend = () => {
       const dataUri = reader.result as string;
       onAddPhoto(task.id, dataUri);
+      toast({ title: "Memory Added!", description: "Photo added." });
     };
     reader.readAsDataURL(file);
 

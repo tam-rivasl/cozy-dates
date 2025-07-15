@@ -12,7 +12,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Heart, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/context/UserContext';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
@@ -22,7 +21,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const { signIn } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -37,17 +35,25 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    const error = await signIn(data.email, data.password);
-    if (error) {
+    // Replace with your local auth logic
+    console.log('Login data:', data);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast({
+        title: 'Login Successful!',
+        description: 'Redirecting to your dashboard.',
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error.message,
+        description: error.message || 'An unexpected error occurred.',
       });
-    } else {
-      router.push('/dashboard');
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

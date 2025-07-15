@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import imageCompression from 'browser-image-compression';
-import { useUser } from '@/context/UserContext';
 import {
   Dialog,
   DialogContent,
@@ -27,10 +26,12 @@ import { Button } from '@/components/ui/button';
 import { Loader2, User, Save } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import type { Profile } from '@/lib/types';
 
 interface EditProfileDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  profile: Profile | null;
 }
 
 const profileSchema = z.object({
@@ -40,8 +41,7 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-export function EditProfileDialog({ isOpen, onOpenChange }: EditProfileDialogProps) {
-  const { profile, updateProfile } = useUser();
+export function EditProfileDialog({ isOpen, onOpenChange, profile }: EditProfileDialogProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -118,23 +118,24 @@ export function EditProfileDialog({ isOpen, onOpenChange }: EditProfileDialogPro
         }
     }
     
-    const error = await updateProfile(data.username, avatarFile);
-
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: error.message,
-      });
-    } else {
-      toast({
-        title: 'Profile Updated!',
-        description: 'Your changes have been saved.',
-      });
-      onOpenChange(false);
+    // Replace with your local profile update logic
+    console.log('Updating profile:', data.username, avatarFile);
+    try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast({
+            title: 'Profile Updated!',
+            description: 'Your changes have been saved.',
+        });
+        onOpenChange(false);
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: error.message,
+        });
+    } finally {
+        setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
   
   if (!profile) return null;

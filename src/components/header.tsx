@@ -3,9 +3,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Heart, LogOut, BookHeart, Home, Music, Film, Menu, Users, Settings } from 'lucide-react';
-import { useUser } from '@/context/UserContext';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -17,19 +16,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from './theme-toggle';
 import { EditProfileDialog } from './edit-profile-dialog';
 import { ManagePartnerDialog } from './manage-partner-dialog';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import type { Profile } from '@/lib/types';
+
+// Mock Data - Replace with your local auth state
+const mockProfile: Profile = {
+  id: '1',
+  username: 'Tamara',
+  avatar_url: 'https://placehold.co/100x100.png',
+  updated_at: new Date().toISOString(),
+  partner_id: '2',
+};
+
+const mockPartnerProfile: Profile = {
+  id: '2',
+  username: 'Carlos',
+  avatar_url: 'https://placehold.co/100x100.png',
+  updated_at: new Date().toISOString(),
+  partner_id: '1',
+};
+
 
 export function Header() {
-  const { profile, signOut } = useUser();
   const pathname = usePathname();
+  const router = useRouter();
+  const [profile] = useState<Profile | null>(mockProfile);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isEditProfileOpen, setEditProfileOpen] = useState(false);
   const [isManagePartnerOpen, setManagePartnerOpen] = useState(false);
+
+  const signOut = () => {
+    // Replace with your local sign out logic
+    console.log('Signing out...');
+    router.push('/login');
+  };
   
   const navLinks = [
     { href: '/dashboard', label: 'Home', icon: Home },
@@ -156,8 +181,8 @@ export function Header() {
           </div>
         </div>
       </header>
-      {profile && <EditProfileDialog isOpen={isEditProfileOpen} onOpenChange={setEditProfileOpen} />}
-      {profile && <ManagePartnerDialog isOpen={isManagePartnerOpen} onOpenChange={setManagePartnerOpen} />}
+      {profile && <EditProfileDialog isOpen={isEditProfileOpen} onOpenChange={setEditProfileOpen} profile={profile} />}
+      {profile && <ManagePartnerDialog isOpen={isManagePartnerOpen} onOpenChange={setManagePartnerOpen} profile={profile} partnerProfile={mockPartnerProfile} />}
     </>
   );
 }
