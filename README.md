@@ -45,12 +45,11 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
     *   En la configuración del proyecto, busca la sección de API.
     *   Copia la **URL del proyecto** y la **clave pública anónima (anon public key)**.
 2.  **Configurar el entorno**:
-    *   Crea un archivo `.env` en la raíz de tu proyecto si no existe.
-    *   Añade las siguientes líneas, reemplazando los valores con tus credenciales:
+    *   Copia el archivo `.env.example` a `.env` y reemplaza los valores con tus credenciales:
+        ```bash
+        cp .env.example .env
         ```
-        NEXT_PUBLIC_SUPABASE_URL=TU_URL_DE_SUPABASE
-        NEXT_PUBLIC_SUPABASE_ANON_KEY=TU_CLAVE_ANONIMA
-        ```
+    *   Dentro de `.env` encontrarás variables como `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`.
 3.  **Ejecutar las migraciones SQL**:
     *   En tu panel de Supabase, ve al **SQL Editor**.
     *   **Paso 1: Schema Inicial.** Copia todo el contenido de `supabase/migrations/0000_initial_schema.sql`. Pega el contenido en una nueva consulta y haz clic en **"RUN"**. Esto creará todas las tablas y políticas de seguridad.
@@ -62,5 +61,11 @@ He desarrollado un sistema completo de gestión de tareas y entretenimiento util
      * `decline-invitation`
      * `unpair-partner`
      * `sync-tasks`
+5. **Automatizar despliegues con la CLI**:
+   * Instala la [CLI de Supabase](https://supabase.com/docs/guides/cli) y ejecuta:
+     ```bash
+     npm run supabase:deploy
+     ```
+   * Este comando enviará las migraciones y publicará las funciones anteriores en tu proyecto.
 
 ¡Con estos pasos, tu aplicación estará lista y conectada a tu backend de Supabase!
