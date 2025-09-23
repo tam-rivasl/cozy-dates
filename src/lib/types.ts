@@ -1,15 +1,36 @@
+export interface Profile {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  theme: string | null;
+  coupleId: string | null;
+  confirmedAt: string | null;
+}
+
+export interface CoupleMembership {
+  coupleId: string;
+  status: 'pending' | 'accepted' | 'declined';
+  role: 'owner' | 'member';
+}
+
+export interface CoupleSummary {
+  id: string;
+  name: string | null;
+  inviteCode: string | null;
+}
+
 export interface Task {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   date: Date;
   category: 'Date Night' | 'Travel Plans' | 'To-Do' | 'Special Event' | 'Movie Day';
   priority: 'High' | 'Medium' | 'Low';
   completed: boolean;
-  createdBy: User;
-  photos?: string[];
-  notes?: string;
-  watchlistItemId?: string;
+  createdBy: Profile | null;
+  photos: string[];
+  notes: string | null;
+  watchlistItemId?: string | null;
 }
 
 export interface WatchlistItem {
@@ -17,8 +38,8 @@ export interface WatchlistItem {
   title: string;
   type: 'Movie' | 'Series';
   status: 'To Watch' | 'Watched';
-  addedBy: User;
-  notes?: string;
+  addedBy: Profile | null;
+  notes?: string | null;
 }
 
 export interface MusicNote {
@@ -26,7 +47,5 @@ export interface MusicNote {
   title: string;
   notes: string;
   playlistUrl: string;
-  addedBy: User;
+  addedBy: Profile | null;
 }
-
-export type User = 'Tamara' | 'Carlos';

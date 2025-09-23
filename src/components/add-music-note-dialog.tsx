@@ -27,7 +27,7 @@ import type { MusicNote } from '@/lib/types';
 interface AddMusicNoteDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddItem: (item: Omit<MusicNote, 'id' | 'addedBy'>) => void;
+  onAddItem: (item: Omit<MusicNote, 'id' | 'addedBy'>) => Promise<void>;
 }
 
 const itemSchema = z.object({
@@ -48,8 +48,10 @@ export function AddMusicNoteDialog({ isOpen, onOpenChange, onAddItem }: AddMusic
     },
   });
 
-  const onSubmit = (data: ItemFormValues) => {
-    onAddItem(data);
+  const isSubmitting = form.formState.isSubmitting;
+
+  const onSubmit = async (data: ItemFormValues) => {
+    await onAddItem(data);
     form.reset();
     onOpenChange(false);
   };
@@ -106,7 +108,7 @@ export function AddMusicNoteDialog({ isOpen, onOpenChange, onAddItem }: AddMusic
             />
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Add Dedication</Button>
+              <Button type="submit" disabled={isSubmitting}>Add Dedication</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -114,3 +116,5 @@ export function AddMusicNoteDialog({ isOpen, onOpenChange, onAddItem }: AddMusic
     </Dialog>
   );
 }
+
+

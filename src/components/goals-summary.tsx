@@ -1,37 +1,50 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useMemo } from 'react';
 import { Trophy, CheckCircle2, Lightbulb } from 'lucide-react';
+import { getProfileDisplayName } from '@/lib/profile';
 
 interface GoalsSummaryProps {
   tasks: Task[];
 }
 
+interface Contribution {
+  profileId: string;
+  displayName: string;
+  count: number;
+}
+
 export function GoalsSummary({ tasks }: GoalsSummaryProps) {
-  const {
-    completedCount,
-    tamaraIdeaCount,
-    carlosIdeaCount,
-    totalIdeas,
-    tamaraProgress,
-    carlosProgress,
-  } = useMemo(() => {
+  const { completedCount, totalIdeas, contributions } = useMemo(() => {
     const completed = tasks.filter((task) => task.completed).length;
-    const tamaraIdeas = tasks.filter((task) => task.createdBy === 'Tamara').length;
-    const carlosIdeas = tasks.filter((task) => task.createdBy === 'Carlos').length;
-    const total = tamaraIdeas + carlosIdeas;
+    const contributionMap = new Map<string, Contribution>();
+
+    tasks.forEach((task) => {
+      const profileId = task.createdBy?.id ?? 'unknown';
+      const existing = contributionMap.get(profileId);
+
+      if (existing) {
+        existing.count += 1;
+      } else {
+        contributionMap.set(profileId, {
+          profileId,
+          displayName: getProfileDisplayName(task.createdBy),
+          count: 1,
+        });
+      }
+    });
+
+    const contributionsArray = Array.from(contributionMap.values()).sort(
+      (a, b) => b.count - a.count,
+    );
 
     return {
       completedCount: completed,
-      tamaraIdeaCount: tamaraIdeas,
-      carlosIdeaCount: carlosIdeas,
-      totalIdeas: total,
-      tamaraProgress: total > 0 ? (tamaraIdeas / total) * 100 : 0,
-      carlosProgress: total > 0 ? (carlosIdeas / total) * 100 : 0,
+      totalIdeas: tasks.length,
+      contributions: contributionsArray,
     };
   }, [tasks]);
 
@@ -56,44 +69,29 @@ export function GoalsSummary({ tasks }: GoalsSummaryProps) {
             <p className="text-sm text-muted-foreground">Total Ideas</p>
           </div>
         </div>
-        
+
         <div>
           <h3 className="text-sm font-medium mb-2 text-center">Idea Contribution</h3>
-          <div className="space-y-3">
-             <div className="flex justify-between items-center gap-4">
-               <span className="text-sm font-medium text-tamara">Tamara's Ideas</span>
-               <span className="text-sm font-bold">{tamaraIdeaCount}</span>
-             </div>
-             <div className="flex justify-between items-center gap-4">
-               <span className="text-sm font-medium text-carlos">Carlos's Ideas</span>
-               <span className="text-sm font-bold">{carlosIdeaCount}</span>
-             </div>
+          <div className="space-y-4">
+            {contributions.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center">No ideas yet. Add your first plan!</p>
+            ) : (
+              contributions.map((contribution) => {
+                const percentage = totalIdeas > 0 ? (contribution.count / totalIdeas) * 100 : 0;
+                return (
+                  <div key={contribution.profileId} className="space-y-1">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="font-medium">{contribution.displayName}</span>
+                      <span className="font-bold">{contribution.count}</span>
+                    </div>
+                    <Progress value={percentage} />
+                  </div>
+                );
+              })
+            )}
           </div>
-           <div className="mt-2 w-full h-4 rounded-full flex overflow-hidden bg-muted">
-             {/* Container for the progress bars and names with relative positioning */}
-             <div className="relative w-full h-4 flex">
-                {/* Tamara's Progress Bar */}
-                <div
-                  className="h-full bg-tamara transition-all duration-500 relative flex justify-center items-center"
-                  style={{ width: `${tamaraProgress}%` }}
-                >
-                  {/* Tamara's Name */}
-                  <span className="absolute bottom-full mb-1 text-xs font-bold text-tamara">
-                    Tamara
-                  </span>
-                </div>
-                {/* Carlos's Progress Bar */}
-                <div
-                  className="h-full bg-carlos transition-all duration-500 relative flex justify-center items-center"
-                  style={{ width: `${carlosProgress}%` }}
-                >
-                   {/* Carlos's Name */}
-                   <span className="absolute bottom-full mb-1 text-xs font-bold text-carlos">Carlos</span>
-                </div>
-             </div>
-           </div>
- </div>
- </CardContent>
- </Card>
- );
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

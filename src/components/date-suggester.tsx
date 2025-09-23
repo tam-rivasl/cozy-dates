@@ -12,8 +12,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-  SheetFooter,
+  SheetTrigger
 } from '@/components/ui/sheet';
 import {
   Form,
@@ -113,7 +112,7 @@ export function DateSuggester() {
                   name="partnerInterests"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Your Partner's Interests</FormLabel>
+                      <FormLabel>Your partner&apos;s Interests</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., sci-fi movies, cooking, dogs" {...field} />
                       </FormControl>
@@ -126,7 +125,7 @@ export function DateSuggester() {
                   name="pastActivities"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Past Dates You've Enjoyed (optional)</FormLabel>
+                      <FormLabel>Past Dates you&apos;ve Enjoyed (optional)</FormLabel>
                       <FormControl>
                         <Textarea placeholder="e.g., visiting the art museum, picnics in the park" {...field} />
                       </FormControl>
@@ -159,3 +158,4 @@ export function DateSuggester() {
     </Sheet>
   );
 }
+

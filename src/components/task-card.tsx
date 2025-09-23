@@ -10,13 +10,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarDays, Tag, Flag, Trash2, User, Camera, StickyNote } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks/use-toast';
+import { getProfileAvatarSrc, getProfileDisplayName } from '@/lib/profile';
 
 interface TaskCardProps {
   task: Task;
-  onToggleComplete: (id: string) => void;
-  onDelete: (id: string) => void;
-  onAddPhoto: (id: string, photoDataUri: string) => void;
+  onToggleComplete: (id: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  onAddPhoto: (id: string, photoDataUri: string) => Promise<void>;
 }
 
 export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskCardProps) {
@@ -24,9 +25,10 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
     High: 'bg-red-500/80 hover:bg-red-500',
     Medium: 'bg-yellow-500/80 hover:bg-yellow-500',
     Low: 'bg-green-500/80 hover:bg-green-500',
-  };
+  } as const;
 
-  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
+  const creatorName = getProfileDisplayName(task.createdBy);
+  const creatorAvatarUrl = getProfileAvatarSrc(task.createdBy);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -34,7 +36,7 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -48,30 +50,29 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
     }
 
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const dataUri = reader.result as string;
-      onAddPhoto(task.id, dataUri);
+      await onAddPhoto(task.id, dataUri);
     };
     reader.readAsDataURL(file);
 
     if (event.target) {
-      event.target.value = "";
+      event.target.value = '';
     }
   };
-
 
   return (
     <Card className={`transition-all duration-300 ${task.completed ? 'bg-card/60 dark:bg-card/40' : 'bg-card'}`}>
       <CardHeader>
         <div className="flex justify-between items-start gap-4">
           <div className="flex items-center space-x-3">
-             <Checkbox
-                id={`task-${task.id}`}
-                checked={task.completed}
-                onCheckedChange={() => onToggleComplete(task.id)}
-                aria-label={`Mark "${task.title}" as ${task.completed ? 'incomplete' : 'complete'}`}
-                className="w-6 h-6"
-              />
+            <Checkbox
+              id={`task-${task.id}`}
+              checked={task.completed}
+              onCheckedChange={() => onToggleComplete(task.id)}
+              aria-label={`Mark "${task.title}" as ${task.completed ? 'incomplete' : 'complete'}`}
+              className="w-6 h-6"
+            />
             <CardTitle className={`text-xl font-headline ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
               {task.title}
             </CardTitle>
@@ -93,86 +94,86 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center">
-              <CalendarDays className="mr-2 h-4 w-4" />
-              <span>{format(task.date, 'PPP p')}</span>
-            </div>
-            <div className="flex items-center">
-              <Tag className="mr-2 h-4 w-4" />
-              <Badge variant="secondary">{task.category}</Badge>
-            </div>
-            <div className="flex items-center">
-              <Flag className="mr-2 h-4 w-4" />
-              <Badge className={`${priorityColors[task.priority]} text-white`}>{task.priority}</Badge>
-            </div>
-            <div className="flex items-center">
-              <User className="mr-2 h-4 w-4" />
-               <div className="flex items-center gap-2">
-                <span>Idea by:</span>
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={creatorAvatarUrl} alt={task.createdBy} />
-                  <AvatarFallback>{task.createdBy.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <span className="font-medium">{task.createdBy}</span>
-              </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          <div className="flex items-center">
+            <CalendarDays className="mr-2 h-4 w-4" />
+            <span>{format(task.date, 'PPP p')}</span>
+          </div>
+          <div className="flex items-center">
+            <Tag className="mr-2 h-4 w-4" />
+            <Badge variant="secondary">{task.category}</Badge>
+          </div>
+          <div className="flex items-center">
+            <Flag className="mr-2 h-4 w-4" />
+            <Badge className={`${priorityColors[task.priority]} text-white`}>{task.priority}</Badge>
+          </div>
+          <div className="flex items-center">
+            <User className="mr-2 h-4 w-4" />
+            <div className="flex items-center gap-2">
+              <span>Idea by:</span>
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={creatorAvatarUrl} alt={creatorName} />
+                <AvatarFallback>{creatorName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span className="font-medium">{creatorName}</span>
             </div>
           </div>
+        </div>
 
-          {task.notes && (
-            <div className="pt-4 border-t">
+        {task.notes && (
+          <div className="pt-4 border-t">
+            <div>
+              <h4 className="flex items-center text-sm font-medium mb-1">
+                <StickyNote className="mr-2 h-4 w-4 text-primary/80" />
+                Notes
+              </h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap pl-6">{task.notes}</p>
+            </div>
+          </div>
+        )}
+
+        {task.completed && (
+          <div className="w-full pt-4 border-t">
+            <div className="flex justify-between items-center w-full mb-2">
+              <h4 className="text-sm font-medium">Memories</h4>
               <div>
-                  <h4 className="flex items-center text-sm font-medium mb-1">
-                      <StickyNote className="mr-2 h-4 w-4 text-primary/80" />
-                      Notes
-                  </h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap pl-6">{task.notes}</p>
+                <Button variant="outline" size="sm" onClick={handleAddPhotoClick}>
+                  <Camera className="mr-2 h-4 w-4" />
+                  Add Photo
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
             </div>
-          )}
-        
-          {task.completed && (
-            <div className="w-full pt-4 border-t">
-              <div className="flex justify-between items-center w-full mb-2">
-                <h4 className="text-sm font-medium">Memories</h4>
-                <div>
-                  <Button variant="outline" size="sm" onClick={handleAddPhotoClick}>
-                    <Camera className="mr-2 h-4 w-4" />
-                    Add Photo
-                  </Button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                </div>
+            {task.photos && task.photos.length > 0 ? (
+              <div className="grid grid-cols-4 gap-2">
+                {task.photos.slice(0, 4).map((photo, index) => (
+                  <div key={photo} className="relative aspect-square">
+                    <Image
+                      src={photo}
+                      alt={`Memory ${index + 1}`}
+                      width={100}
+                      height={100}
+                      className="rounded-md object-cover w-full h-full"
+                    />
+                    {index === 3 && task.photos.length > 4 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
+                        <span className="text-white font-bold text-lg">+{task.photos.length - 4}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              {task.photos && task.photos.length > 0 ? (
-                 <div className="grid grid-cols-4 gap-2">
-                  {task.photos.slice(0, 4).map((photo, index) => (
-                    <div key={index} className="relative aspect-square">
-                      <Image 
-                        src={photo} 
-                        alt={`Memory ${index + 1}`} 
-                        width={100} 
-                        height={100}
-                        className="rounded-md object-cover w-full h-full" 
-                      />
-                      {index === 3 && task.photos!.length > 4 && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
-                          <span className="text-white font-bold text-lg">+{task.photos!.length - 4}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">No photos added yet.</p>
-              )}
-            </div>
-          )}
+            ) : (
+              <p className="text-xs text-muted-foreground">No photos added yet.</p>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

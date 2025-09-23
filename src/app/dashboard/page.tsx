@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Task } from '@/lib/types';
 import { Header } from '@/components/header';
 import { AddTaskDialog } from '@/components/add-task-dialog';
 import { TaskCard } from '@/components/task-card';
@@ -103,7 +102,7 @@ export default function DashboardPage() {
             ) : (
                <div className="text-center py-12 px-6 bg-card rounded-lg shadow-sm">
                 <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-muted-foreground">No completed tasks yet. Let's make some memories!</p>
+                <p className="mt-4 text-muted-foreground">No completed tasks yet. Let&apos;s make some memories!</p>
               </div>
             )}
           </div>
@@ -112,3 +111,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

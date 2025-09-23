@@ -8,9 +8,11 @@ import { CalendarDays, User, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Button } from './ui/button';
+import { getProfileAvatarSrc, getProfileDisplayName } from '@/lib/profile';
 
-export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: string) => void }) {
-  const creatorAvatarUrl = task.createdBy === 'Tamara' ? '/img/tamara.png' : '/img/carlos.png';
+export function MemoryCard({ task, onDelete }: { task: Task; onDelete: (id: string) => Promise<void> }) {
+  const creatorName = getProfileDisplayName(task.createdBy);
+  const creatorAvatarUrl = getProfileAvatarSrc(task.createdBy);
 
   return (
     <Card className="overflow-hidden">
@@ -31,21 +33,21 @@ export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: stri
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
-            <div className="flex items-center">
-                <CalendarDays className="mr-2 h-4 w-4" />
-                <span>{format(task.date, 'PPP')}</span>
+          <div className="flex items-center">
+            <CalendarDays className="mr-2 h-4 w-4" />
+            <span>{format(task.date, 'PPP')}</span>
+          </div>
+          <div className="flex items-center">
+            <User className="mr-2 h-4 w-4" />
+            <div className="flex items-center gap-2">
+              <span>Idea by:</span>
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={creatorAvatarUrl} alt={creatorName} />
+                <AvatarFallback>{creatorName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span className="font-medium">{creatorName}</span>
             </div>
-            <div className="flex items-center">
-                <User className="mr-2 h-4 w-4" />
-                <div className="flex items-center gap-2">
-                    <span>Idea by:</span>
-                    <Avatar className="h-6 w-6">
-                        <AvatarImage src={creatorAvatarUrl} alt={task.createdBy} />
-                        <AvatarFallback>{task.createdBy.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{task.createdBy}</span>
-                </div>
-            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -53,10 +55,10 @@ export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: stri
           <Carousel className="w-full" opts={{ loop: true }}>
             <CarouselContent className="-ml-4">
               {task.photos.map((photo, index) => (
-                <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                <CarouselItem key={photo} className="pl-4 md:basis-1/2 lg:basis-1/3">
                   <div className="relative aspect-video">
-                    <Image 
-                      src={photo} 
+                    <Image
+                      src={photo}
                       alt={`Memory photo ${index + 1}`}
                       fill
                       className="rounded-lg object-contain"
@@ -66,14 +68,14 @@ export function MemoryCard({ task, onDelete }: { task: Task, onDelete: (id: stri
               ))}
             </CarouselContent>
             {task.photos.length > 1 && (
-                <>
-                    <CarouselPrevious className="absolute left-2" />
-                    <CarouselNext className="absolute right-2" />
-                </>
+              <>
+                <CarouselPrevious className="absolute left-2" />
+                <CarouselNext className="absolute right-2" />
+              </>
             )}
           </Carousel>
         ) : (
-            <p className="text-sm text-muted-foreground">No photos for this memory yet.</p>
+          <p className="text-sm text-muted-foreground">No photos for this memory yet.</p>
         )}
       </CardContent>
     </Card>

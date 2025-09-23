@@ -1,96 +1,219 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import type { WatchlistItem, User } from '@/lib/types';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import { supabase } from '@/lib/supabase';
+import type { Profile, WatchlistItem } from '@/lib/types';
 import { useUser } from '@/context/UserContext';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks/use-toast';
+import { logError, logInfo, logWarn } from '@/lib/logger';
 
 interface WatchlistContextType {
   watchlistItems: WatchlistItem[];
   isLoading: boolean;
-  addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => void;
-  deleteWatchlistItem: (itemId: string) => void;
-  markAsWatched: (itemId: string) => void;
+  addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => Promise<void>;
+  deleteWatchlistItem: (itemId: string) => Promise<void>;
+  markAsWatched: (itemId: string) => Promise<void>;
 }
 
-const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
+interface WatchlistRow {
+  id: string;
+  title: string;
+  kind: string;
+  status: string;
+  notes: string | null;
+  added_by: string | null;
+}
 
-const initialItems: WatchlistItem[] = [
-    { id: 'w1', title: 'Dune: Part Two', type: 'Movie', status: 'To Watch', addedBy: 'Carlos', notes: 'Heard the visuals are amazing.'},
-    { id: 'w2', title: 'Shōgun', type: 'Series', status: 'To Watch', addedBy: 'Tamara' },
-    { id: 'w3', title: 'Past Lives', type: 'Movie', status: 'Watched', addedBy: 'Tamara', notes: 'So beautiful and sad!' },
-];
+const KIND_FROM_DB: Record<string, WatchlistItem['type']> = {
+  movie: 'Movie',
+  series: 'Series',
+};
+
+const KIND_TO_DB: Record<WatchlistItem['type'], string> = {
+  Movie: 'movie',
+  Series: 'series',
+};
+
+const STATUS_FROM_DB: Record<string, WatchlistItem['status']> = {
+  to_watch: 'To Watch',
+  watched: 'Watched',
+};
+
+const STATUS_TO_DB: Record<WatchlistItem['status'], string> = {
+  'To Watch': 'to_watch',
+  Watched: 'watched',
+};
+
+const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
 
 export function WatchlistProvider({ children }: { children: ReactNode }) {
   const [watchlistItems, setWatchlistItems] = useState<WatchlistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useUser();
+  const { user, members, activeCoupleId } = useUser();
   const { toast } = useToast();
 
-  useEffect(() => {
-    try {
-      const storedItems = localStorage.getItem('cozy-watchlist');
-      if (storedItems) {
-        setWatchlistItems(JSON.parse(storedItems));
-      } else {
-        setWatchlistItems(initialItems);
-      }
-    } catch (e) {
-      setWatchlistItems(initialItems);
-    } finally {
+  const membersMap = useMemo(() => {
+    const map = new Map<string, Profile>();
+    members.forEach((profile) => {
+      map.set(profile.id, profile);
+    });
+    return map;
+  }, [members]);
+
+  const fetchWatchlist = useCallback(async () => {
+    if (!activeCoupleId) {
+      logInfo('WatchlistContext.fetchWatchlist', 'Sin pareja activa, limpiando lista');
+      setWatchlistItems([]);
       setIsLoading(false);
+      return;
     }
-  }, []);
+
+    setIsLoading(true);
+    logInfo('WatchlistContext.fetchWatchlist', 'Cargando watchlist', { coupleId: activeCoupleId });
+
+    const { data, error } = await supabase
+      .from('watchlist_items')
+      .select('id, title, kind, status, notes, added_by')
+      .eq('couple_id', activeCoupleId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logError('WatchlistContext.fetchWatchlist', 'Error cargando watchlist', error);
+      toast({
+        variant: 'destructive',
+        title: 'No pudimos cargar la watchlist',
+        description: 'Intenta nuevamente en unos minutos.',
+      });
+      setWatchlistItems([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const rows = ((data ?? []) as WatchlistRow[]);
+    const items = rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      type: KIND_FROM_DB[row.kind] ?? 'Movie',
+      status: STATUS_FROM_DB[row.status] ?? 'To Watch',
+      addedBy: row.added_by ? membersMap.get(row.added_by) ?? null : null,
+      notes: row.notes,
+    } satisfies WatchlistItem));
+
+    setWatchlistItems(items);
+    setIsLoading(false);
+    logInfo('WatchlistContext.fetchWatchlist', 'Watchlist cargada', { count: items.length });
+  }, [activeCoupleId, membersMap, toast]);
 
   useEffect(() => {
-    if (!isLoading) {
-      try {
-        localStorage.setItem('cozy-watchlist', JSON.stringify(watchlistItems));
-      } catch (e) {
-        // LocalStorage not available
+    void fetchWatchlist();
+  }, [fetchWatchlist]);
+
+  const addWatchlistItem = useCallback<WatchlistContextType['addWatchlistItem']>(
+    async (item) => {
+      if (!user || !activeCoupleId) {
+        logWarn('WatchlistContext.addWatchlistItem', 'No se pudo agregar item por falta de contexto', {
+          userId: user?.id ?? null,
+        });
+        return;
       }
-    }
-  }, [watchlistItems, isLoading]);
 
-  const addWatchlistItem = (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => {
-    if (!user) return;
-    const newItem: WatchlistItem = {
-      ...item,
-      id: crypto.randomUUID(),
-      status: 'To Watch',
-      addedBy: user,
-    };
-    setWatchlistItems((prev) => [newItem, ...prev]);
-    toast({
-      title: "Added to Watchlist!",
-      description: `"${newItem.title}" is ready to be watched.`,
-    })
-  };
+      logInfo('WatchlistContext.addWatchlistItem', 'Agregando elemento', { title: item.title });
 
-  const markAsWatched = (itemId: string) => {
-    setWatchlistItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId && item.status === 'To Watch'
-          ? { ...item, status: 'Watched' }
-          : item
-      )
-    );
-  };
+      const { error } = await supabase.from('watchlist_items').insert({
+        title: item.title,
+        kind: KIND_TO_DB[item.type],
+        status: STATUS_TO_DB['To Watch'],
+        notes: item.notes ?? null,
+        couple_id: activeCoupleId,
+        added_by: user.id,
+      });
 
-  const deleteWatchlistItem = (itemId: string) => {
-    setWatchlistItems((prev) => prev.filter((item) => item.id !== itemId));
-     toast({
-      title: "Item Removed",
-      description: "The item has been removed from your watchlist.",
-      variant: "destructive"
-    })
-  };
-  
-  return (
-    <WatchlistContext.Provider value={{ watchlistItems, isLoading, addWatchlistItem, deleteWatchlistItem, markAsWatched }}>
-      {children}
-    </WatchlistContext.Provider>
+      if (error) {
+        logError('WatchlistContext.addWatchlistItem', 'Error agregando elemento', error);
+        toast({
+          variant: 'destructive',
+          title: 'No pudimos agregar el titulo',
+          description: 'Intentalo nuevamente mas tarde.',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Agregado a la watchlist',
+        description: `"${item.title}" esta listo para ver.`,
+      });
+
+      await fetchWatchlist();
+    },
+    [fetchWatchlist, toast, user, activeCoupleId],
   );
+
+  const markAsWatched = useCallback<WatchlistContextType['markAsWatched']>(
+    async (itemId) => {
+      logInfo('WatchlistContext.markAsWatched', 'Marcando como visto', { itemId });
+      const { error } = await supabase
+        .from('watchlist_items')
+        .update({ status: STATUS_TO_DB.Watched })
+        .eq('id', itemId);
+
+      if (error) {
+        logError('WatchlistContext.markAsWatched', 'Error marcando como visto', error);
+        toast({
+          variant: 'destructive',
+          title: 'No pudimos actualizar el elemento',
+          description: 'Intentalo nuevamente mas tarde.',
+        });
+        return;
+      }
+
+      await fetchWatchlist();
+    },
+    [fetchWatchlist, toast],
+  );
+
+  const deleteWatchlistItem = useCallback<WatchlistContextType['deleteWatchlistItem']>(
+    async (itemId) => {
+      logInfo('WatchlistContext.deleteWatchlistItem', 'Eliminando elemento', { itemId });
+      const { error } = await supabase
+        .from('watchlist_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) {
+        logError('WatchlistContext.deleteWatchlistItem', 'Error eliminando elemento', error);
+        toast({
+          variant: 'destructive',
+          title: 'No pudimos eliminar el elemento',
+          description: 'Intentalo nuevamente mas tarde.',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Elemento eliminado',
+        description: 'Se quito de la lista.',
+        variant: 'destructive',
+      });
+
+      await fetchWatchlist();
+    },
+    [fetchWatchlist, toast],
+  );
+
+  const value = useMemo(
+    () => ({ watchlistItems, isLoading, addWatchlistItem, deleteWatchlistItem, markAsWatched }),
+    [watchlistItems, isLoading, addWatchlistItem, deleteWatchlistItem, markAsWatched],
+  );
+
+  return <WatchlistContext.Provider value={value}>{children}</WatchlistContext.Provider>;
 }
 
 export function useWatchlist() {
@@ -100,3 +223,4 @@ export function useWatchlist() {
   }
   return context;
 }
+

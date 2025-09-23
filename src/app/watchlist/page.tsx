@@ -13,6 +13,16 @@ import { WatchlistItemCard } from '@/components/watchlist-item-card';
 import { Film, PlusCircle, Loader2, Video } from 'lucide-react';
 import { AddTaskDialog } from '@/components/add-task-dialog';
 
+type PlanSeed = {
+  title?: string;
+  description?: string;
+  notes?: string;
+  category?: 'Date Night' | 'Travel Plans' | 'To-Do' | 'Special Event' | 'Movie Day';
+  priority?: 'High' | 'Medium' | 'Low';
+  date?: Date;
+  watchlistItemId?: string;
+};
+
 export default function WatchlistPage() {
     const { user, isLoading: isUserLoading } = useUser();
     const { watchlistItems, isLoading: areItemsLoading, addWatchlistItem, deleteWatchlistItem } = useWatchlist();
@@ -21,7 +31,7 @@ export default function WatchlistPage() {
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
     const [isAddPlanDialogOpen, setAddPlanDialogOpen] = useState(false);
-    const [initialPlanData, setInitialPlanData] = useState<any>();
+    const [initialPlanData, setInitialPlanData] = useState<PlanSeed | undefined>();
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -33,7 +43,7 @@ export default function WatchlistPage() {
         setInitialPlanData({
             title: item.title,
             description: 'Dia de pelis',
-            notes: item.notes,
+            notes: item.notes ?? '',
             category: 'Movie Day',
             watchlistItemId: item.id,
         });
@@ -130,3 +140,7 @@ export default function WatchlistPage() {
         </div>
     );
 }
+
+
+
+

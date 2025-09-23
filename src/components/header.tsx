@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Heart, LogOut, BookHeart, Home, Music, Film, Menu } from 'lucide-react';
+import { Heart, LogOut, BookHeart, Home, Music, Film, Menu, Settings } from 'lucide-react';
 
 import { useUser } from '@/context/UserContext';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -16,45 +17,61 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+
+function getFallbackAvatar(userTheme: string | null): string | undefined {
+  if (userTheme === 'tamara') {
+    return '/img/tamara.png';
+  }
+
+  if (userTheme === 'carlos') {
+    return '/img/carlos.png';
+  }
+
+  return undefined;
+}
 
 export function Header() {
   const { user, setUser } = useUser();
+  const { signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const displayName = user?.displayName ?? 'Invitado';
+  const avatarSrc = useMemo(() => {
+    if (user?.avatarUrl) {
+      return user.avatarUrl;
+    }
+
+    return getFallbackAvatar(user?.theme ?? null);
+  }, [user]);
+
   const handleLogout = () => {
     setUser(null);
-    router.push('/');
+    signOut().finally(() => {
+      router.push('/auth/login');
+    });
   };
 
-  const avatarUrl = user === 'Tamara' 
-    ? "/img/tamara.png" 
-    : "/img/carlos.png";
-  
   const navLinks = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/memories', label: 'Our Memories', icon: BookHeart },
     { href: '/music', label: 'Musical Notes', icon: Music },
     { href: '/watchlist', label: 'Watchlist', icon: Film },
   ];
-  
+
   const NavLinksContent = ({ isMobile }: { isMobile?: boolean }) => (
-    <nav className={cn(
-        isMobile 
-        ? "flex flex-col space-y-2" 
-        : "hidden md:flex items-center space-x-2"
-    )}>
-      {navLinks.map(link => (
+    <nav className={cn(isMobile ? 'flex flex-col space-y-2' : 'hidden md:flex items-center space-x-2')}>
+      {navLinks.map((link) => (
         <Link key={link.href} href={link.href} passHref>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className={cn(
               pathname === link.href && 'bg-accent',
-              isMobile && 'w-full justify-start text-base'
+              isMobile && 'w-full justify-start text-base',
             )}
             onClick={() => isMobile && setMobileMenuOpen(false)}
           >
@@ -83,46 +100,66 @@ export function Header() {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={avatarUrl} alt={user} />
-                    <AvatarFallback>{user.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={avatarSrc} alt={displayName} />
+                    <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Hello, {user}!</p>
+                    <p className="text-sm font-medium leading-none">Hola, {displayName}!</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      Time to plan something amazing.
+                      Planeemos algo increible.
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configuracion</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Switch User</span>
+                  <span>Cerrar sesion</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
 
-          {/* Mobile Menu */}
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">Abrir menu</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[280px] p-4">
-                  <Link href="/dashboard" className="flex items-center gap-2 mb-8" onClick={() => setMobileMenuOpen(false)}>
-                    <Heart className="h-8 w-8 text-primary" />
-                    <span className="font-headline text-2xl font-bold">Cozy Dates</span>
-                  </Link>
-                  <NavLinksContent isMobile={true} />
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 mb-8"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Heart className="h-8 w-8 text-primary" />
+                  <span className="font-headline text-2xl font-bold">Cozy Dates</span>
+                </Link>
+                <NavLinksContent isMobile />
+                {user ? (
+                  <Button
+                    variant="ghost"
+                    className="mt-4 w-full justify-start"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      router.push('/settings');
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" /> Configuracion
+                  </Button>
+                ) : null}
               </SheetContent>
             </Sheet>
           </div>

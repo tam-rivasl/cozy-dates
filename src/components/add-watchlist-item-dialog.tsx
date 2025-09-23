@@ -28,7 +28,7 @@ import type { WatchlistItem } from '@/lib/types';
 interface AddWatchlistItemDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => void;
+  onAddItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => Promise<void>;
 }
 
 const itemSchema = z.object({
@@ -49,8 +49,10 @@ export function AddWatchlistItemDialog({ isOpen, onOpenChange, onAddItem }: AddW
     },
   });
 
-  const onSubmit = (data: ItemFormValues) => {
-    onAddItem(data);
+  const isSubmitting = form.formState.isSubmitting;
+
+  const onSubmit = async (data: ItemFormValues) => {
+    await onAddItem(data);
     form.reset();
     onOpenChange(false);
   };
@@ -124,7 +126,7 @@ export function AddWatchlistItemDialog({ isOpen, onOpenChange, onAddItem }: AddW
             />
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Add Item</Button>
+              <Button type="submit" disabled={isSubmitting}>Add Item</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -132,3 +134,7 @@ export function AddWatchlistItemDialog({ isOpen, onOpenChange, onAddItem }: AddW
     </Dialog>
   );
 }
+
+
+
+

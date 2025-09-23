@@ -1,15 +1,16 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -25,24 +26,23 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Task } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
-import { useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 const taskSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
-  description: z.string().max(500, 'Description is too long').optional(),
-  date: z.date({ required_error: 'A date is required.' }),
-  hour: z.string({ required_error: 'An hour is required.' }),
-  minute: z.string({ required_error: 'A minute is required.' }),
+  title: z.string().min(1, 'El título es obligatorio').max(100, 'Título demasiado largo'),
+  description: z.string().max(500, 'Descripción demasiado larga').optional(),
+  date: z.date({ required_error: 'Necesitamos una fecha.' }),
+  hour: z.string({ required_error: 'Selecciona la hora.' }),
+  minute: z.string({ required_error: 'Selecciona los minutos.' }),
   category: z.enum(['Date Night', 'Travel Plans', 'To-Do', 'Special Event', 'Movie Day']),
   priority: z.enum(['High', 'Medium', 'Low'], {
-    errorMap: () => ({ message: 'Please select a priority.' }),
+    errorMap: () => ({ message: 'Selecciona una prioridad.' }),
   }),
-  notes: z.string().max(500, 'Notes are too long').optional(),
+  notes: z.string().max(500, 'Las notas son demasiado largas').optional(),
   watchlistItemId: z.string().optional(),
 });
 
@@ -51,7 +51,7 @@ type TaskFormValues = z.infer<typeof taskSchema>;
 interface AddTaskDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'createdBy' | 'photos'>) => void;
+  onAddTask: (task: Omit<Task, 'id' | 'completed' | 'createdBy' | 'photos'>) => Promise<void>;
   initialData?: Partial<TaskFormValues>;
 }
 
@@ -68,9 +68,12 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
       hour: '19',
       minute: '00',
       category: 'Date Night',
+      priority: 'Medium',
       watchlistItemId: undefined,
     },
   });
+
+  const isSubmitting = form.formState.isSubmitting;
 
   useEffect(() => {
     if (isOpen) {
@@ -81,21 +84,30 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
         hour: '19',
         minute: '00',
         category: initialData?.category || 'Date Night',
-        priority: initialData?.priority,
+        priority: initialData?.priority ?? 'Medium',
         date: initialData?.date,
         watchlistItemId: initialData?.watchlistItemId,
       });
     }
   }, [isOpen, initialData, form]);
 
-  const onSubmit = (data: TaskFormValues) => {
+  const onSubmit = async (data: TaskFormValues) => {
     const combinedDate = new Date(data.date);
     combinedDate.setHours(parseInt(data.hour, 10), parseInt(data.minute, 10));
-    
-    const { hour, minute, ...taskDetails } = data;
 
-    const taskData = { ...taskDetails, date: combinedDate, description: data.description || ''};
-    onAddTask(taskData);
+    const normalizedNotes = data.notes?.trim() || null;
+
+    const taskData = {
+      title: data.title,
+      description: data.description || '',
+      date: combinedDate,
+      category: data.category,
+      priority: data.priority,
+      notes: normalizedNotes,
+      watchlistItemId: data.watchlistItemId ?? null,
+    };
+
+    await onAddTask(taskData);
     form.reset();
     onOpenChange(false);
   };
@@ -104,9 +116,9 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add a New Plan</DialogTitle>
+          <DialogTitle>Agregar nuevo plan</DialogTitle>
           <DialogDescription>
-            What romantic adventure is next? Fill in the details below.
+            Cuéntame qué momento especial quieren planear.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -118,9 +130,9 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel>Título</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Surprise Picnic" {...field} />
+                        <Input placeholder="Ej. Picnic sorpresa" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -131,45 +143,32 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Descripción</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Describe your plan..." {...field} />
+                        <Textarea placeholder="Detalles o recordatorios" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                 <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="e.g., Remember snacks, blanket, etc." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Date</FormLabel>
+                        <FormLabel>Fecha</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
-                                variant={'outline'}
+                                variant="outline"
                                 className={cn(
-                                  'w-full pl-3 text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
+                                  'w-full justify-start text-left font-normal',
+                                  !field.value && 'text-muted-foreground',
                                 )}
                               >
-                                {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                                {field.value ? format(field.value, 'PPP') : <span>Selecciona una fecha</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
@@ -179,7 +178,7 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
                               mode="single"
                               selected={field.value}
                               onSelect={field.onChange}
-                              disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                               initialFocus
                             />
                           </PopoverContent>
@@ -188,20 +187,25 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
                       </FormItem>
                     )}
                   />
-                  <FormField
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
                       control={form.control}
                       name="hour"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Hour</FormLabel>
+                          <FormLabel>Hora</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Hour" />
+                                <SelectValue placeholder="Hora" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                              {hours.map((h) => (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -213,75 +217,98 @@ export function AddTaskDialog({ isOpen, onOpenChange, onAddTask, initialData }: 
                       name="minute"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Minute</FormLabel>
+                          <FormLabel>Minutos</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Minute" />
+                                <SelectValue placeholder="Min" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {minutes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                              {minutes.map((m) => (
+                                <SelectItem key={m} value={m}>
+                                  {m}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
-                      control={form.control}
-                      name="category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Date Night">Date Night</SelectItem>
-                              <SelectItem value="Movie Day">Movie Day</SelectItem>
-                              <SelectItem value="Travel Plans">Travel Plans</SelectItem>
-                              <SelectItem value="To-Do">To-Do</SelectItem>
-                              <SelectItem value="Special Event">Special Event</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="priority"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Priority</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a priority" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="High">High</SelectItem>
-                              <SelectItem value="Medium">Medium</SelectItem>
-                              <SelectItem value="Low">Low</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Categoría</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Date Night">Date Night</SelectItem>
+                            <SelectItem value="Movie Day">Movie Day</SelectItem>
+                            <SelectItem value="Travel Plans">Travel Plans</SelectItem>
+                            <SelectItem value="To-Do">To-Do</SelectItem>
+                            <SelectItem value="Special Event">Special Event</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prioridad</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="High">Alta</SelectItem>
+                            <SelectItem value="Medium">Media</SelectItem>
+                            <SelectItem value="Low">Baja</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notas adicionales</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Detalles, listas o ideas extra" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </ScrollArea>
             <DialogFooter className="pt-4">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Add Plan</Button>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Agregar plan
+              </Button>
             </DialogFooter>
           </form>
         </Form>
