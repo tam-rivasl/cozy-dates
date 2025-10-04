@@ -1,8 +1,10 @@
+import type { AppTheme } from '@/lib/theme';
+
 export interface Profile {
   id: string;
   displayName: string;
   avatarUrl: string | null;
-  theme: string | null;
+  theme: AppTheme | null;
   coupleId: string | null;
   confirmedAt: string | null;
 }

@@ -138,7 +138,6 @@ export default function WatchlistPage() {
                       item={item}
                       onDelete={deleteWatchlistItem}
                       onPlanMovieNight={handlePlanMovieNight}
-                      avatarUrl={user.avatarUrl}
                     />
                   </motion.div>
                 ))}
@@ -187,7 +186,6 @@ export default function WatchlistPage() {
                       item={item}
                       onDelete={deleteWatchlistItem}
                       onPlanMovieNight={handlePlanMovieNight}
-                      avatarUrl={user.avatarUrl}
                     />
                   </motion.div>
                 ))}

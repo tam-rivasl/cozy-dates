@@ -20,7 +20,7 @@ const registerSchema = z
     email: z.string().email('Ingresa un correo valido'),
     password: z.string().min(6, 'La contrasena debe tener al menos 6 caracteres'),
     displayName: z.string().min(1, 'Necesitamos un nombre para mostrar'),
-    theme: z.enum(['default', 'tamara', 'carlos']).default('default'),
+    theme: z.enum(['default', 'blossom', 'dark']).default('default'),
     avatarUrl: z.string().url('La URL debe ser valida').optional().or(z.literal('')),
     mode: z.enum(['create', 'join']).default('create'),
     coupleName: z.string().optional(),
@@ -195,8 +195,8 @@ export default function RegisterPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="default">Automatico</SelectItem>
-                          <SelectItem value="tamara">Tema Tamara</SelectItem>
-                          <SelectItem value="carlos">Tema Carlos</SelectItem>
+                        <SelectItem value="blossom">Tema Blossom</SelectItem>
+                        <SelectItem value="dark">Tema Dark</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

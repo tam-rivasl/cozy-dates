@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { logError, logInfo } from '@/lib/logger';
+import { AVAILABLE_THEMES } from '@/lib/theme';
+
+const themeOptions = ['default', ...AVAILABLE_THEMES] as const;
 
 const avatarFileSchema = z
   .any()
@@ -44,7 +47,7 @@ const registerSchema = z
     email: z.string().email('Ingresa un correo valido'),
     password: z.string().min(6, 'La contrasena debe tener al menos 6 caracteres'),
     displayName: z.string().min(1, 'Necesitamos un nombre para mostrar'),
-    theme: z.enum(['default', 'tamara', 'carlos']).default('default'),
+    theme: z.enum(themeOptions).default('default'),
     avatarFile: avatarFileSchema,
     hasCoupleCode: z.boolean(),
     coupleCode: z.string().optional(),
@@ -227,8 +230,8 @@ export default function RegisterPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="default">Automatico</SelectItem>
-                          <SelectItem value="tamara">Tema Tamara</SelectItem>
-                          <SelectItem value="carlos">Tema Carlos</SelectItem>
+                        <SelectItem value="blossom">Tema Blossom</SelectItem>
+                        <SelectItem value="dark">Tema Dark</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

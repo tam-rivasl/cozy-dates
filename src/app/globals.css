@@ -28,29 +28,30 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --blossom-color: 335 70% 65%;
-    --dark-color: 150 35% 40%;
+    --dark-color: 24 32% 34%;
   }
 
   .dark {
-    --background: 240 10% 6%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 8%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 8%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 300 26.1% 79.8%;
-    --primary-foreground: 300 10% 15%;
-    --secondary: 240 3.7% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 18%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 16%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 20%;
-    --input: 240 3.7% 20%;
-    --ring: 300 26.1% 79.8%;
+    /* Base dark mode palette to ensure legacy pages also inherit the earthy theme */
+    --background: 22 30% 11%;
+    --foreground: 34 42% 90%;
+    --card: 24 28% 15%;
+    --card-foreground: 34 42% 90%;
+    --popover: 22 28% 14%;
+    --popover-foreground: 34 42% 90%;
+    --primary: 158 30% 38%;
+    --primary-foreground: 32 48% 92%;
+    --secondary: 18 32% 24%;
+    --secondary-foreground: 32 48% 88%;
+    --muted: 20 24% 28%;
+    --muted-foreground: 30 26% 70%;
+    --accent: 32 34% 32%;
+    --accent-foreground: 36 50% 90%;
+    --destructive: 8 64% 46%;
+    --destructive-foreground: 0 0% 96%;
+    --border: 20 26% 28%;
+    --input: 20 26% 28%;
+    --ring: 158 30% 38%;
   }
 
   .theme-blossom {
@@ -84,33 +85,33 @@
   }
 
   .theme-dark {
-    /* Warm dark theme with coffee notes and forest greens */
-    --background: 26 24% 11%;
-    --foreground: 34 34% 92%;
+    /* Earthy terracotta + forest green palette for accessible contrast */
+    --background: 22 30% 11%;
+    --foreground: 34 42% 90%;
 
-    --card: 28 22% 14%;
-    --card-foreground: 34 34% 92%;
-    --popover: 26 24% 13%;
-    --popover-foreground: 34 34% 92%;
+    --card: 24 28% 15%;
+    --card-foreground: 34 42% 90%;
+    --popover: 22 28% 14%;
+    --popover-foreground: 34 42% 90%;
 
-    --primary: 150 35% 42%;
-    --primary-foreground: 35 30% 94%;
+    --primary: 158 30% 38%;
+    --primary-foreground: 32 48% 92%;
 
-    --secondary: 28 24% 22%;
-    --secondary-foreground: 35 30% 88%;
+    --secondary: 18 32% 24%;
+    --secondary-foreground: 32 48% 88%;
 
-    --muted: 28 18% 26%;
-    --muted-foreground: 36 20% 70%;
+    --muted: 20 24% 28%;
+    --muted-foreground: 30 26% 70%;
 
-    --accent: 150 28% 24%;
-    --accent-foreground: 120 22% 82%;
+    --accent: 32 34% 32%;
+    --accent-foreground: 36 50% 90%;
 
-    --destructive: 6 64% 48%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 8 64% 46%;
+    --destructive-foreground: 0 0% 96%;
 
-    --border: 28 20% 28%;
-    --input: 28 20% 28%;
-    --ring: 150 35% 42%;
+    --border: 20 26% 28%;
+    --input: 20 26% 28%;
+    --ring: 158 30% 38%;
   }
 
   * {

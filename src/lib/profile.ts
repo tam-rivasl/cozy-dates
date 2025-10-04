@@ -1,18 +1,7 @@
 import type { Profile } from '@/lib/types';
 import { logInfo } from './logger';
 import { supabase } from '@/lib/supabase';
-
-const FALLBACK_AVATARS: Record<string, string> = {
-  blossom: '/img/blossom.png',
-  'theme-blossom': '/img/blossom.png',
-  dark: '/img/dark.png',
-  'theme-dark': '/img/dark.png',
-  // Legacy aliases kept for backwards compatibility
-  tamara: '/img/blossom.png',
-  'theme-tamara': '/img/blossom.png',
-  carlos: '/img/dark.png',
-  'theme-carlos': '/img/dark.png',
-};
+import { getFallbackAvatarForTheme } from '@/lib/theme';
 
 export function getProfileAvatarSrc(profile: Profile | null): string | undefined {
   logInfo('profile', 'getProfileAvatarSrc', profile);
@@ -33,9 +22,8 @@ export function getProfileAvatarSrc(profile: Profile | null): string | undefined
     }
   }
 
-  if (theme && FALLBACK_AVATARS[theme]) {
-    return FALLBACK_AVATARS[theme];
-  }
+  const fallback = getFallbackAvatarForTheme(theme ?? null);
+  if (fallback) return fallback;
 
   return undefined;
 }

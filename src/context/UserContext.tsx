@@ -3,6 +3,11 @@
 import { supabase } from '@/lib/supabase';
 import { logError, logInfo, logWarn } from '@/lib/logger';
 import type { CoupleMembership, CoupleSummary, Profile } from '@/lib/types';
+import {
+  getThemeClassList,
+  normalizeThemeName,
+  type AppTheme,
+} from '@/lib/theme';
 import React, {
   createContext,
   useCallback,
@@ -29,7 +34,7 @@ interface ProfileRow {
   id: string;
   display_name: string;
   avatar_url: string | null;
-  theme: string | null;            // <- mantenemos theme
+  theme: string | null; // <- mantenemos theme
   // confirmed_at: string | null;   // <- quitalo del SELECT
 }
 
@@ -45,20 +50,9 @@ interface CoupleRow {
   invite_code: string | null;
 }
 
-type SupportedTheme = 'tamara' | 'carlos';
-
 export const UserContext = createContext<UserContextType | undefined>(undefined);
-
-const SUPPORTED_THEMES: Set<SupportedTheme> = new Set(['tamara', 'carlos']);
-const DARK_THEMES: Set<SupportedTheme> = new Set(['carlos']);
 const AVATAR_BUCKET = 'avatars';
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
-
-function normalizeTheme(theme: string | null): string | null {
-  if (!theme) return null;
-  const cleaned = theme.trim().toLowerCase();
-  return cleaned.length > 0 ? cleaned : null;
-}
 
 async function resolveAvatarUrl(rawUrl: string | null): Promise<string | null> {
   if (!rawUrl) return null;
@@ -96,7 +90,7 @@ function mapProfile(row: ProfileRow, coupleId: string | null, confirmedAt: strin
     id: row.id,
     displayName: row.display_name,
     avatarUrl: row.avatar_url,
-    theme: normalizeTheme(row.theme),
+    theme: normalizeThemeName(row.theme),
     coupleId,
     confirmedAt, // lo poblamos desde auth.user.email_confirmed_at
   };
@@ -105,19 +99,15 @@ function mapProfile(row: ProfileRow, coupleId: string | null, confirmedAt: strin
 function applyTheme(profile: Profile | null) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  root.classList.remove('dark', 'theme-tamara', 'theme-carlos');
+  root.classList.remove('dark', 'theme-tamara', 'theme-carlos', 'theme-blossom', 'theme-dark');
 
-  const theme = normalizeTheme(profile?.theme ?? null);
+  const theme = profile?.theme ?? null;
   if (!theme) return;
 
-  const typedTheme = theme as SupportedTheme;
-  if (!SUPPORTED_THEMES.has(typedTheme)) return;
+  const classes = getThemeClassList(theme as AppTheme);
+  if (classes.length === 0) return;
 
-  if (DARK_THEMES.has(typedTheme)) {
-    root.classList.add('dark');
-  }
-
-  root.classList.add('theme-' + typedTheme);
+  root.classList.add(...classes);
 }
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -296,7 +286,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const setUser = useCallback((profile: Profile | null) => {
     logInfo('UserContext.setUser', 'Actualizando perfil en cache', { profileId: profile?.id ?? null });
-    const normalizedProfile = profile ? { ...profile, theme: normalizeTheme(profile.theme) } : null;
+    const normalizedProfile = profile
+      ? { ...profile, theme: normalizeThemeName(profile.theme) }
+      : null;
     setUserState(normalizedProfile);
     applyTheme(normalizedProfile);
   }, []);
