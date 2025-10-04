@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Copy, Check, Users, Settings } from "lucide-react";
+import { Loader2, Copy, Check, Settings, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/header";
 import { PageHeading } from "@/components/page-heading";
@@ -25,7 +25,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CoupleMembersList } from "@/components/profile/couple-members-list";
 import { logError, logInfo } from "@/lib/logger";
+import {
+  THEME_LABELS,
+  normalizeThemeName,
+  type AppTheme,
+} from "@/lib/theme";
+import {
+  profileSchema,
+  themeOptions,
+  toPersistedTheme,
+  type ThemeOption,
+} from "./profile-schema";
 
 /**
  * Importante sobre seguridad/RLS:
@@ -33,7 +47,6 @@ import { logError, logInfo } from "@/lib/logger";
  * - Aun así, lo enviamos en el payload para trazabilidad y DX de logs.
  * - Del lado servidor (Edge Function y/o DB RLS) se DEBE verificar que `payload.user_id === auth.uid()`.
  */
-
 interface ManageCoupleRequest {
   action: "create" | "join";
   name?: string | null;
@@ -56,16 +69,37 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/webp",
 ];
 
+const themeSelectItems: Array<{ value: ThemeOption; label: string }> = themeOptions.map(
+  (value) => {
+    const label =
+      value === "default"
+        ? "Automático"
+        : `Tema ${THEME_LABELS[value as AppTheme]}`;
+
+    return { value, label };
+  }
+);
+
 export default function SettingsPage() {
-  const { user, activeCouple, refreshProfiles, isLoading } = useUser();
+  const {
+    user,
+    activeCouple,
+    members,
+    memberships,
+    refreshProfiles,
+    isLoading,
+  } = useUser();
   const { toast } = useToast();
 
   // Derivamos el userId autenticado una sola vez; evita leer `user?.id` por todos lados.
   const userId = user?.id ?? null;
 
-  // Estado UI
+  // Estado UI controlado del formulario y operaciones asíncronas.
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
-  const [theme, setTheme] = useState(user?.theme ?? "default");
+  const [theme, setTheme] = useState<ThemeOption>(() => {
+    const normalized = normalizeThemeName(user?.theme ?? null);
+    return normalized ?? "default";
+  });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isCoupleLoading, setIsCoupleLoading] = useState(false);
@@ -73,41 +107,85 @@ export default function SettingsPage() {
   const [coupleNameInput, setCoupleNameInput] = useState("");
   const [copied, setCopied] = useState(false);
 
+  const confirmedAtLabel = useMemo(() => {
+    if (!user?.confirmedAt) return "Pendiente de confirmación";
+    try {
+      return new Intl.DateTimeFormat("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(user.confirmedAt));
+    } catch (error) {
+      logError(
+        "SettingsPage.confirmedAt",
+        "No pudimos formatear la fecha de confirmación",
+        error
+      );
+      return user.confirmedAt;
+    }
+  }, [user?.confirmedAt]);
+
   // Mantén el formulario sincronizado si cambia el usuario en contexto.
   useEffect(() => {
     if (user) {
       setDisplayName(user.displayName ?? "");
-      setTheme(user.theme ?? "default");
+      const normalizedTheme = normalizeThemeName(user.theme ?? null);
+      setTheme(normalizedTheme ?? "default");
       setAvatarFile(null);
     }
   }, [user]);
 
   // Guardas el tema como null si es "default" para mantener el schema limpio.
-  const themeValue = useMemo(
-    () => (theme === "default" ? null : theme),
-    [theme]
-  );
+  const themeValue = useMemo<AppTheme | null>(() => toPersistedTheme(theme), [
+    theme,
+  ]);
+  const selectedThemeLabel =
+    themeValue && THEME_LABELS[themeValue]
+      ? `Tema ${THEME_LABELS[themeValue]}`
+      : "Automático";
+
+  const avatarPreviewUrl = useMemo(() => {
+    if (!avatarFile) return null;
+    return URL.createObjectURL(avatarFile);
+  }, [avatarFile]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) {
+        URL.revokeObjectURL(avatarPreviewUrl);
+      }
+    };
+  }, [avatarPreviewUrl]);
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </main>
+      <div className="relative flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(215,204,230,0.35),_transparent_60%)]">
+        <Header />
+        <main className="flex flex-1 items-center justify-center px-4 py-16">
+          <span className="inline-flex items-center gap-3 rounded-full bg-background/80 px-6 py-3 text-sm font-medium shadow-lg shadow-primary/10">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
+            Cargando preferencias seguras…
+          </span>
+        </main>
+      </div>
     );
   }
 
   if (!userId) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader>
-            <CardTitle>Inicia sesión</CardTitle>
-            <CardDescription>
-              Necesitas una cuenta confirmada para acceder a la configuración.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </main>
+      <div className="relative flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(215,204,230,0.35),_transparent_60%)]">
+        <Header />
+        <main className="flex flex-1 items-center justify-center px-4 py-16">
+          <Card className="w-full max-w-md rounded-3xl border border-border/40 bg-card/80 text-center shadow-xl shadow-primary/5 backdrop-blur">
+            <CardHeader>
+              <CardTitle>Inicia sesión</CardTitle>
+              <CardDescription>
+                Necesitas una cuenta confirmada para acceder a la configuración.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </main>
+      </div>
     );
   }
 
@@ -156,7 +234,7 @@ export default function SettingsPage() {
     const { data: publicData } = supabase.storage
       .from("avatars")
       .getPublicUrl(filePath);
-    logInfo("SettingsPage.uploadAvatarIfNeeded", "traer avatar subido", {
+    logInfo("SettingsPage.uploadAvatarIfNeeded", "Avatar publicado", {
       filePath,
       publicData,
     });
@@ -166,12 +244,17 @@ export default function SettingsPage() {
   // --- Actions ---
 
   const handleProfileSave = async () => {
-    /**
-     * Puntos clave:
-     * - RLS en `profiles`: UPDATE permitido solo si `auth.uid() = id`.
-     * - Mandamos `eq("id", userId)` para ser explícitos y para evitar updates masivos por error.
-     * - No usamos upsert aquí: preferimos fallar si no existe el row (consistencia).
-     */
+    const result = profileSchema.safeParse({ displayName, theme });
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      toast({
+        title: "Revisa los campos del perfil",
+        description: firstIssue?.message ?? "Completa los datos requeridos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsSavingProfile(true);
 
@@ -186,10 +269,9 @@ export default function SettingsPage() {
         .from("profiles")
         .update({
           id: userId, // redundante pero explícito (y útil si el server registra columnas)
-          display_name: displayName.trim(),
+          display_name: result.data.displayName.trim(),
           theme: themeValue,
           avatar_url: avatarUrl,
-          // Opcional: updated_at: new Date().toISOString(),
         })
         .eq("id", userId);
 
@@ -233,9 +315,12 @@ export default function SettingsPage() {
     setIsCoupleLoading(true);
     try {
       const { data, error } =
-        await supabase.functions.invoke<ManageCoupleResponse>("manage-couple", {
-          body: { ...payload, user_id: userId },
-        });
+        await supabase.functions.invoke<ManageCoupleResponse>(
+          "manage-couple",
+          {
+            body: { ...payload, user_id: userId },
+          }
+        );
 
       if (error) {
         throw new Error(error.message ?? "No pudimos procesar la solicitud.");
@@ -271,7 +356,7 @@ export default function SettingsPage() {
       );
       await invokeManageCouple({
         action: "create",
-        name: coupleNameInput || null,
+        name: coupleNameInput.trim() || null,
       });
     } catch (err) {
       logError("SettingsPage.handleCreateCouple", "Error creando pareja", err);
@@ -337,180 +422,275 @@ export default function SettingsPage() {
       <motion.main
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="container flex-1 space-y-8 pb-12 pt-8"
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="container flex-1 space-y-10 px-4 pb-16 pt-8 sm:px-6 lg:px-10"
       >
         <PageHeading
           icon={Settings}
           title="Configuración de la cuenta"
-          description="Administra tus preferencias personales y compartidas. Todos los cambios quedan registrados en los logs."
+          description="Gestiona tu perfil personal y la relación en pareja con total trazabilidad."
         />
 
-        <motion.section layout className="grid gap-6 lg:grid-cols-2">
-          <Card className="group h-full rounded-3xl border border-border/40 bg-card/80 shadow-lg shadow-primary/10 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:shadow-2xl">
-            <CardHeader>
-              <CardTitle>Preferencias de perfil</CardTitle>
-              <CardDescription>
-                Actualiza tu nombre para mostrar, tema y avatar.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Nombre para mostrar</Label>
-                <Input
-                  id="displayName"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Tu nombre"
-                />
-              </div>
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="flex w-full flex-wrap gap-2 overflow-x-auto rounded-full bg-muted/60 p-1 text-muted-foreground">
+            <TabsTrigger
+              value="profile"
+              className="flex min-w-[140px] flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition"
+            >
+              <FileText className="h-4 w-4" aria-hidden="true" />
+              Perfil
+            </TabsTrigger>
+            <TabsTrigger
+              value="configuration"
+              className="flex min-w-[140px] flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition"
+            >
+              <Settings className="h-4 w-4" aria-hidden="true" />
+              Configuración
+            </TabsTrigger>
+          </TabsList>
 
-              <div className="space-y-2">
-                <Label>Tema</Label>
-                <Select value={theme ?? "default"} onValueChange={setTheme}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un tema" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Automático</SelectItem>
-                    <SelectItem value="tamara">Tema Tamara</SelectItem>
-                    <SelectItem value="carlos">Tema Carlos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <TabsContent value="profile" className="space-y-6 focus-visible:outline-none">
+            <motion.section layout className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <Card className="h-full rounded-3xl border border-border/40 bg-card/80 shadow-xl shadow-primary/5 backdrop-blur">
+                <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <CardTitle>Preferencias de perfil</CardTitle>
+                    <CardDescription>
+                      Actualiza tu información personal y el tema visual preferido.
+                    </CardDescription>
+                  </div>
+                  <div className="rounded-full bg-muted/60 px-4 py-1 text-xs font-medium text-muted-foreground">
+                    {selectedThemeLabel}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-border/40 bg-background/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-20 w-20 border-2 border-primary/40">
+                        <AvatarImage
+                          src={avatarPreviewUrl ?? user?.avatarUrl ?? undefined}
+                          alt={user?.displayName ?? "Avatar"}
+                        />
+                        <AvatarFallback className="text-lg font-semibold">
+                          {user?.displayName?.charAt(0).toUpperCase() ?? "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1 text-sm">
+                        <p className="font-semibold text-foreground">{user?.displayName}</p>
+                        <p className="text-muted-foreground">Cuenta confirmada: {confirmedAtLabel}</p>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Los cambios se replican en todos tus dispositivos tras guardar.
+                    </div>
+                  </section>
 
-              <div className="space-y-2">
-                <Label htmlFor="avatar">Avatar</Label>
-                <Input
-                  id="avatar"
-                  type="file"
-                  accept={ACCEPTED_IMAGE_TYPES.join(",")}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] ?? null;
-                    setAvatarFile(file);
-                  }}
-                />
-                <p className="text-xs text-muted-foreground">
-                  PNG/JPG/WebP hasta {MAX_AVATAR_MB} MB.
-                </p>
-              </div>
-
-              <Button
-                onClick={handleProfileSave}
-                disabled={isSavingProfile}
-                className="w-full"
-              >
-                {isSavingProfile ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
-                Guardar cambios
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="group h-full rounded-3xl border border-border/40 bg-card/80 shadow-lg shadow-primary/10 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:shadow-2xl">
-            <CardHeader>
-              <CardTitle>Gestión de pareja</CardTitle>
-              <CardDescription>
-                Comparte tu código con tu pareja o ingresa el que te
-                compartieron para vincularse.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {activeCouple ? (
-                <div className="space-y-4 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-5 shadow-inner">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-medium">Pareja activa</p>
-                      <p className="text-lg font-headline">
-                        {activeCouple.name ?? "Nuestra pareja"}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName">Nombre para mostrar</Label>
+                      <Input
+                        id="displayName"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Tu nombre"
+                        aria-describedby="display-name-helper"
+                      />
+                      <p id="display-name-helper" className="text-xs text-muted-foreground">
+                        Mínimo 1 carácter, máximo 80.
                       </p>
                     </div>
-                    <Users className="h-5 w-5 text-primary" />
+                    <div className="space-y-2">
+                      <Label htmlFor="theme">Tema</Label>
+                      <Select value={theme} onValueChange={(value) => setTheme(value as ThemeOption)}>
+                        <SelectTrigger id="theme">
+                          <SelectValue placeholder="Selecciona un tema" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {themeSelectItems.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  {activeCouple.inviteCode ? (
-                    <div className="flex items-center gap-2">
-                      <Input value={activeCouple.inviteCode} readOnly />
-                      <Button onClick={handleCopyInvite} variant="secondary">
-                        {copied ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
+                  <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                    <div className="space-y-2">
+                      <Label htmlFor="avatar">Avatar</Label>
+                      <Input
+                        id="avatar"
+                        type="file"
+                        accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          setAvatarFile(file);
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        PNG/JPG/WebP hasta {MAX_AVATAR_MB} MB. El recorte se ajusta automáticamente.
+                      </p>
+                    </div>
+                    <div className="space-y-1 rounded-2xl border border-border/40 bg-muted/40 p-3 text-xs text-muted-foreground">
+                      <p className="font-semibold text-foreground">Buenas prácticas</p>
+                      <p>Utiliza imágenes centradas para optimizar el recorte circular.</p>
+                      <p>No compartas datos sensibles dentro del avatar.</p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleProfileSave}
+                    disabled={isSavingProfile}
+                    className="w-full sm:w-auto"
+                  >
+                    {isSavingProfile ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Guardar cambios
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <CoupleMembersList
+                currentUserId={userId}
+                members={members}
+                memberships={memberships}
+                activeCouple={activeCouple}
+              />
+            </motion.section>
+          </TabsContent>
+
+          <TabsContent
+            value="configuration"
+            className="space-y-6 focus-visible:outline-none"
+          >
+            <motion.section layout className="grid gap-6 lg:grid-cols-2">
+              <Card className="h-full rounded-3xl border border-border/40 bg-card/80 shadow-xl shadow-primary/5 backdrop-blur">
+                <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <CardTitle>Gestión de pareja</CardTitle>
+                    <CardDescription>
+                      Agrega o comparte tu código seguro para sincronizar agendas y recuerdos.
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    <Settings className="h-3.5 w-3.5" aria-hidden="true" />
+                    Gestión activa
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {activeCouple ? (
+                    <div className="space-y-4 rounded-2xl border border-primary/30 bg-primary/5 p-5 shadow-inner">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Pareja activa</p>
+                          <p className="text-lg font-headline text-foreground">
+                            {activeCouple.name ?? "Nuestra pareja"}
+                          </p>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Vinculo replicado en todos los dispositivos.
+                        </div>
+                      </div>
+
+                      {activeCouple.inviteCode ? (
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <Input value={activeCouple.inviteCode} readOnly aria-label="Código de invitación activo" />
+                          <Button onClick={handleCopyInvite} variant="secondary" className="sm:w-auto">
+                            {copied ? (
+                              <Check className="h-4 w-4" aria-hidden="true" />
+                            ) : (
+                              <Copy className="h-4 w-4" aria-hidden="true" />
+                            )}
+                            <span className="sr-only">Copiar código</span>
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Esta pareja aún no tiene código para compartir.
+                        </p>
+                      )}
+
+                      <p className="text-xs text-muted-foreground">
+                        Solo se permite una pareja activa por usuario. Contacta soporte para reinicios.
+                      </p>
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Esta pareja aún no tiene código para compartir.
+                    <p className="rounded-2xl border border-dashed border-border/40 bg-background/60 p-4 text-sm text-muted-foreground">
+                      Aún no tienes una pareja vinculada. Crea una nueva o ingresa el código que te compartieron.
                     </p>
                   )}
 
-                  <p className="text-xs text-muted-foreground">
-                    Tus registros solo permiten una pareja activa a la vez.
-                    Contacta soporte si necesitas reiniciar.
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-3 rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
+                      <Label htmlFor="coupleName">Crear pareja nueva</Label>
+                      <Input
+                        id="coupleName"
+                        value={coupleNameInput}
+                        onChange={(e) => setCoupleNameInput(e.target.value)}
+                        placeholder="Nombre opcional"
+                        disabled={Boolean(activeCouple) || isCoupleLoading}
+                      />
+                      <Button
+                        onClick={handleCreateCouple}
+                        disabled={isCoupleLoading || Boolean(activeCouple)}
+                        className="w-full"
+                      >
+                        {isCoupleLoading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : null}
+                        Crear pareja
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3 rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
+                      <Label htmlFor="inviteCode">Tengo un código</Label>
+                      <Input
+                        id="inviteCode"
+                        value={inviteCodeInput}
+                        onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
+                        placeholder="Ej. ABCD1234"
+                        disabled={Boolean(activeCouple) || isCoupleLoading}
+                      />
+                      <Button
+                        onClick={handleJoinCouple}
+                        disabled={isCoupleLoading || Boolean(activeCouple)}
+                        className="w-full"
+                      >
+                        {isCoupleLoading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : null}
+                        Unirme con código
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="h-full rounded-3xl border border-border/40 bg-card/80 shadow-xl shadow-primary/5 backdrop-blur">
+                <CardHeader>
+                  <CardTitle>Recomendaciones de seguridad</CardTitle>
+                  <CardDescription>
+                    Sigue estas mejores prácticas para proteger tus datos y los de tu pareja.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  <p>
+                    • Nunca compartas tu código en redes públicas. Usa canales cifrados o mensajería directa.
                   </p>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Aún no tienes una pareja vinculada. Crea una nueva o ingresa
-                  el código que te compartieron.
-                </p>
-              )}
-
-              <div className="space-y-3 rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
-                <Label htmlFor="coupleName">Crear pareja nueva</Label>
-                <Input
-                  id="coupleName"
-                  value={coupleNameInput}
-                  onChange={(e) => setCoupleNameInput(e.target.value)}
-                  placeholder="Nombre opcional"
-                  disabled={Boolean(activeCouple) || isCoupleLoading}
-                />
-                <Button
-                  onClick={handleCreateCouple}
-                  disabled={isCoupleLoading || Boolean(activeCouple)}
-                >
-                  {isCoupleLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  Crear pareja
-                </Button>
-              </div>
-
-              <div className="space-y-3 rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
-                <Label htmlFor="inviteCode">Tengo un código</Label>
-                <Input
-                  id="inviteCode"
-                  value={inviteCodeInput}
-                  onChange={(e) =>
-                    setInviteCodeInput(e.target.value.toUpperCase())
-                  }
-                  placeholder="Ej. ABCD1234"
-                  disabled={Boolean(activeCouple) || isCoupleLoading}
-                />
-                <Button
-                  onClick={handleJoinCouple}
-                  disabled={isCoupleLoading || Boolean(activeCouple)}
-                >
-                  {isCoupleLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  Unirme con código
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.section>
+                  <p>
+                    • Revoca el acceso desde soporte si detectas actividad sospechosa.
+                  </p>
+                  <p>
+                    • Mantén tus dispositivos actualizados y con bloqueo biométrico.
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.section>
+          </TabsContent>
+        </Tabs>
       </motion.main>
     </div>
   );
 }
-
-
-
-
-
-
-
-
