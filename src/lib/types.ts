@@ -29,7 +29,6 @@ export interface Task {
   completed: boolean;
   createdBy: Profile | null;
   photos: string[];
-  notes: string | null;
   watchlistItemId?: string | null;
 }
 
@@ -38,7 +37,7 @@ export interface WatchlistItem {
   title: string;
   type: 'Movie' | 'Series';
   status: 'To Watch' | 'Watched';
-  addedBy: Profile | null;
+  created_by: Profile | null;
   notes?: string | null;
 }
 
@@ -47,5 +46,5 @@ export interface MusicNote {
   title: string;
   notes: string;
   playlistUrl: string;
-  addedBy: Profile | null;
+  created_by: Profile | null;
 }

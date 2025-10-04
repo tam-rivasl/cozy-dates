@@ -29,8 +29,8 @@ interface ProfileRow {
   id: string;
   display_name: string;
   avatar_url: string | null;
-  theme: string | null;
-  confirmed_at: string | null;
+  theme: string | null;            // <- mantenemos theme
+  // confirmed_at: string | null;   // <- quitalo del SELECT
 }
 
 interface MembershipRow {
@@ -45,29 +45,79 @@ interface CoupleRow {
   invite_code: string | null;
 }
 
+type SupportedTheme = 'tamara' | 'carlos';
+
 export const UserContext = createContext<UserContextType | undefined>(undefined);
 
-function mapProfile(row: ProfileRow, coupleId: string | null): Profile {
+const SUPPORTED_THEMES: Set<SupportedTheme> = new Set(['tamara', 'carlos']);
+const DARK_THEMES: Set<SupportedTheme> = new Set(['carlos']);
+const AVATAR_BUCKET = 'avatars';
+const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+function normalizeTheme(theme: string | null): string | null {
+  if (!theme) return null;
+  const cleaned = theme.trim().toLowerCase();
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+async function resolveAvatarUrl(rawUrl: string | null): Promise<string | null> {
+  if (!rawUrl) return null;
+
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return null;
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const { data: signedData, error: signedError } = await supabase.storage
+    .from(AVATAR_BUCKET)
+    .createSignedUrl(trimmed, SIGNED_URL_TTL_SECONDS);
+
+  if (!signedError && signedData?.signedUrl) {
+    return signedData.signedUrl;
+  }
+
+  const { data: publicData } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(trimmed);
+  if (publicData?.publicUrl) {
+    return publicData.publicUrl;
+  }
+
+  logWarn('UserContext.resolveAvatarUrl', 'No pudimos resolver la URL del avatar, devolviendo nulo', {
+    path: trimmed,
+    signedError,
+  });
+
+  return null;
+}
+
+function mapProfile(row: ProfileRow, coupleId: string | null, confirmedAt: string | null): Profile {
   return {
     id: row.id,
     displayName: row.display_name,
     avatarUrl: row.avatar_url,
-    theme: row.theme,
+    theme: normalizeTheme(row.theme),
     coupleId,
-    confirmedAt: row.confirmed_at,
+    confirmedAt, // lo poblamos desde auth.user.email_confirmed_at
   };
 }
 
 function applyTheme(profile: Profile | null) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  root.classList.remove('dark');
-  root.classList.remove('theme-tamara');
-  root.classList.remove('theme-carlos');
+  root.classList.remove('dark', 'theme-tamara', 'theme-carlos');
 
-  if (profile?.theme) {
-    root.classList.add('theme-' + profile.theme);
+  const theme = normalizeTheme(profile?.theme ?? null);
+  if (!theme) return;
+
+  const typedTheme = theme as SupportedTheme;
+  if (!SUPPORTED_THEMES.has(typedTheme)) return;
+
+  if (DARK_THEMES.has(typedTheme)) {
+    root.classList.add('dark');
   }
+
+  root.classList.add('theme-' + typedTheme);
 }
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -101,9 +151,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     logInfo('UserContext.loadProfiles', 'Iniciando carga de perfil', { userId: authUser.id });
 
+    // 1) Perfil propio
     const { data: profileRow, error: profileError } = await supabase
       .from('profiles')
-      .select('id, display_name, avatar_url, theme, confirmed_at')
+      .select('id, display_name, avatar_url, theme') // <- sin confirmed_at
       .eq('id', authUser.id)
       .single();
 
@@ -125,7 +176,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         avatarUrl: null,
         theme: null,
         coupleId: null,
-        confirmedAt: null,
+        confirmedAt: authUser.email_confirmed_at ?? null, // desde auth
       };
 
       setUserState(fallbackProfile);
@@ -138,6 +189,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // 2) Membresías del usuario
     const { data: membershipRows, error: membershipError } = await supabase
       .from('profile_couples')
       .select('couple_id, status, role')
@@ -153,13 +205,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
       role: row.role as CoupleMembership['role'],
     }));
 
-    const acceptedMembership = mappedMemberships.find((membership) => membership.status === 'accepted') ?? null;
+    const acceptedMembership = mappedMemberships.find((m) => m.status === 'accepted') ?? null;
     const coupleId = acceptedMembership?.coupleId ?? null;
 
-    const mappedProfile = mapProfile(profileRow as ProfileRow, coupleId);
+    const profileRowTyped = profileRow as ProfileRow;
+    const resolvedAvatarUrl = await resolveAvatarUrl(profileRowTyped.avatar_url);
+    const mappedProfile = mapProfile(
+      { ...profileRowTyped, avatar_url: resolvedAvatarUrl } as ProfileRow,
+      coupleId,
+      authUser.email_confirmed_at ?? null,
+    );
     setUserState(mappedProfile);
     applyTheme(mappedProfile);
 
+    // 3) Datos de la pareja + miembros
     let mappedMembers: Profile[] = [];
     let coupleSummary: CoupleSummary | null = null;
 
@@ -181,31 +240,34 @@ export function UserProvider({ children }: { children: ReactNode }) {
         };
       }
 
+      // Embed del otro miembro: requiere la policy nueva en profiles
       const { data: memberRows, error: memberError } = await supabase
         .from('profile_couples')
-        .select('profile:profiles(id, display_name, avatar_url, theme, confirmed_at)')
+        .select('profile:profiles(id, display_name, avatar_url, theme)')
         .eq('couple_id', coupleId)
         .eq('status', 'accepted');
 
       if (memberError) {
         logError('UserContext.loadProfiles', 'No pudimos cargar los miembros de la pareja', memberError);
       } else if (memberRows) {
-        const rows = (memberRows as unknown[]) ?? [];
+        // Normaliza resultado embebido (objeto o array según PostgREST)
+        const rows = (Array.isArray(memberRows) ? memberRows : [memberRows]) ?? [];
         const profileList: ProfileRow[] = [];
-        rows.forEach((row) => {
-          const record = row as { profile?: ProfileRow | ProfileRow[] | null };
-          const value = record.profile ?? null;
-          if (Array.isArray(value)) {
-            value.forEach((item) => {
-              if (item) {
-                profileList.push(item as ProfileRow);
-              }
-            });
-          } else if (value) {
-            profileList.push(value as ProfileRow);
-          }
-        });
-        mappedMembers = profileList.map((profile) => mapProfile(profile, coupleId));
+        for (const r of rows) {
+          const v = r?.profile ?? null;
+          if (Array.isArray(v)) profileList.push(...(v as ProfileRow[]));
+          else if (v) profileList.push(v as ProfileRow);
+        }
+        mappedMembers = await Promise.all(
+          profileList.map(async (p) => {
+            const resolvedAvatarUrl = await resolveAvatarUrl(p.avatar_url);
+            return mapProfile(
+              { ...p, avatar_url: resolvedAvatarUrl } as ProfileRow,
+              coupleId,
+              authUser.email_confirmed_at ?? null,
+            );
+          }),
+        );
       }
     }
 
@@ -223,9 +285,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [authUser]);
 
   useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
+    if (isAuthLoading) return;
     void loadProfiles();
   }, [isAuthLoading, loadProfiles]);
 
@@ -236,8 +296,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const setUser = useCallback((profile: Profile | null) => {
     logInfo('UserContext.setUser', 'Actualizando perfil en cache', { profileId: profile?.id ?? null });
-    setUserState(profile);
-    applyTheme(profile);
+    const normalizedProfile = profile ? { ...profile, theme: normalizeTheme(profile.theme) } : null;
+    setUserState(normalizedProfile);
+    applyTheme(normalizedProfile);
   }, []);
 
   const value = useMemo(
@@ -259,8 +320,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
 export function useUser() {
   const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error('useUser debe usarse dentro de un UserProvider');
-  }
+  if (context === undefined) throw new Error('useUser debe usarse dentro de un UserProvider');
   return context;
 }
+

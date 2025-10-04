@@ -1,13 +1,14 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { Task } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarDays, Tag, Flag, Trash2, User, Camera, StickyNote } from 'lucide-react';
+import { CalendarDays, Tag, Flag, Trash2, User, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -31,9 +32,15 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
   const creatorAvatarUrl = getProfileAvatarSrc(task.createdBy);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleAddPhotoClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleConfirmDelete = async () => {
+    await onDelete(task.id);
+    setDeleteDialogOpen(false);
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,15 +84,30 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
               {task.title}
             </CardTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDelete(task.id)}
-            aria-label={`Delete task "${task.title}"`}
-            className="text-muted-foreground hover:text-destructive shrink-0"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={'Delete task "' + task.title + '"'}
+                className="text-muted-foreground hover:text-destructive shrink-0"
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove this plan?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {'Esta acción no se puede deshacer y eliminará "' + task.title + '" de forma permanente.'}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDelete}>Eliminar</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
         {task.description && (
           <CardDescription className={`pt-2 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
@@ -112,25 +134,13 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
             <div className="flex items-center gap-2">
               <span>Idea by:</span>
               <Avatar className="h-6 w-6">
-                <AvatarImage src={creatorAvatarUrl} alt={creatorName} />
+                <AvatarImage src={creatorAvatarUrl} alt={creatorName} className="object-cover" />
                 <AvatarFallback>{creatorName.charAt(0)}</AvatarFallback>
               </Avatar>
               <span className="font-medium">{creatorName}</span>
             </div>
           </div>
         </div>
-
-        {task.notes && (
-          <div className="pt-4 border-t">
-            <div>
-              <h4 className="flex items-center text-sm font-medium mb-1">
-                <StickyNote className="mr-2 h-4 w-4 text-primary/80" />
-                Notes
-              </h4>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap pl-6">{task.notes}</p>
-            </div>
-          </div>
-        )}
 
         {task.completed && (
           <div className="w-full pt-4 border-t">
@@ -151,7 +161,7 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
               </div>
             </div>
             {task.photos && task.photos.length > 0 ? (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 {task.photos.slice(0, 4).map((photo, index) => (
                   <div key={photo} className="relative aspect-square">
                     <Image
@@ -178,3 +188,5 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
     </Card>
   );
 }
+
+

@@ -18,7 +18,7 @@ import { logError, logInfo, logWarn } from '@/lib/logger';
 interface WatchlistContextType {
   watchlistItems: WatchlistItem[];
   isLoading: boolean;
-  addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'addedBy'>) => Promise<void>;
+  addWatchlistItem: (item: Omit<WatchlistItem, 'id' | 'status' | 'created_by'>) => Promise<void>;
   deleteWatchlistItem: (itemId: string) => Promise<void>;
   markAsWatched: (itemId: string) => Promise<void>;
 }
@@ -28,8 +28,7 @@ interface WatchlistRow {
   title: string;
   kind: string;
   status: string;
-  notes: string | null;
-  added_by: string | null;
+  created_by: string | null;
 }
 
 const KIND_FROM_DB: Record<string, WatchlistItem['type']> = {
@@ -81,7 +80,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase
       .from('watchlist_items')
-      .select('id, title, kind, status, notes, added_by')
+      .select('id, title, kind, status, created_by')
       .eq('couple_id', activeCoupleId)
       .order('created_at', { ascending: false });
 
@@ -97,14 +96,13 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const rows = ((data ?? []) as WatchlistRow[]);
+    const rows = ((data ?? []) as unknown as WatchlistRow[]);
     const items = rows.map((row) => ({
       id: row.id,
       title: row.title,
       type: KIND_FROM_DB[row.kind] ?? 'Movie',
       status: STATUS_FROM_DB[row.status] ?? 'To Watch',
-      addedBy: row.added_by ? membersMap.get(row.added_by) ?? null : null,
-      notes: row.notes,
+      created_by: row.created_by ? membersMap.get(row.created_by) ?? null : null,
     } satisfies WatchlistItem));
 
     setWatchlistItems(items);
@@ -131,9 +129,8 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
         title: item.title,
         kind: KIND_TO_DB[item.type],
         status: STATUS_TO_DB['To Watch'],
-        notes: item.notes ?? null,
         couple_id: activeCoupleId,
-        added_by: user.id,
+        created_by: user.id,
       });
 
       if (error) {

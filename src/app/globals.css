@@ -1,6 +1,5 @@
 @tailwind base;
 
-
 @layer base {
   :root {
     --background: 60 56% 91.2%;
@@ -28,106 +27,92 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --tamara-color: 340 85% 70%;
-    --carlos-color: 120 30% 35%;
+    --blossom-color: 335 70% 65%;
+    --dark-color: 150 35% 40%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
+    --background: 240 10% 6%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 240 10% 8%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 240 10% 8%;
     --popover-foreground: 0 0% 98%;
     --primary: 300 26.1% 79.8%;
     --primary-foreground: 300 10% 15%;
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 240 3.7% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
+    --muted: 240 3.7% 18%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    --accent: 240 3.7% 16%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 240 3.7% 20%;
+    --input: 240 3.7% 20%;
     --ring: 300 26.1% 79.8%;
   }
 
-  .theme-tamara {
-    /* Fondo muy suave, casi blanco rosado */
-    --background: 345 100% 99%;
-  
-    /* Texto principal en gris suave, sin toques cafés */
-    --foreground: 210 10% 20%;
-  
-    /* Tarjetas y popovers con fondo blanco rosado */
-    --card: 345 100% 99%;
-    --card-foreground: 210 10% 20%;
-    --popover: 345 100% 99%;
-    --popover-foreground: 210 10% 20%;
-  
-    /* Botón principal: rosa pastel ligero */
-    --primary: 340 60% 90%;
-    --primary-foreground: 340 20% 25%;
-  
-    /* Segundo botón: lila pastel muy suave */
-    --secondary: 280 50% 94%;
-    --secondary-foreground: 280 20% 30%;
-  
-    /* Elementos atenuados: gris rosado pálido */
-    --muted: 345 20% 96%;
-    --muted-foreground: 210 10% 40%;
-  
-    /* Acento: celeste pastel clarito */
-    --accent: 210 60% 90%;
-    --accent-foreground: 210 30% 30%;
-  
-    /* Alertas y destructivos en coral pastel */
-    --destructive: 5 70% 80%;
-    --destructive-foreground: 5 30% 20%;
-  
-    /* Bordes e inputs: gris muy pálido */
-    --border: 210 10% 90%;
-    --input: 210 10% 90%;
-    --ring: 340 60% 90%;
-  }
-  
+  .theme-blossom {
+    /* Soft petal-inspired palette */
+    --background: 335 75% 97%;
+    --foreground: 340 35% 28%;
 
-  .theme-carlos {
-    /* Fondo principal: casi negro, pero evitando el 100% puro para matizar sombras */
-    --background: 0 0% 5%;
-  
-    /* Texto principal: tono café claro para buen contraste sobre fondo oscuro */
-    --foreground: 30 30% 85%;
-  
-    /* Encabezados y textos destacados dentro de tarjetas y popovers */
-    --card-foreground: 30 30% 90%;
-    --popover-foreground: 30 30% 90%;
-    --secondary-foreground: 30 25% 70%;
-    --muted-foreground: 0 0% 60%;
-    --accent-foreground: 210 50% 95%;
-  
-    /* Fondo de tarjetas y popovers: matices de gris para diferenciar secciones */
-    --card: 0 0% 12%;
-    --popover: 0 0% 15%;
-    --secondary: 210 30% 20%;
-    --muted: 0 0% 25%;
-    --accent: 210 40% 30%;
-  
-    /* Botones principales en verde más suave y menos saturado */
-    --primary: 120 40% 50%;
+    --card: 0 0% 100%;
+    --card-foreground: 340 35% 28%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 340 35% 28%;
+
+    --primary: 335 70% 64%;
     --primary-foreground: 0 0% 100%;
-  
-    /* Alertas y elementos destructivos en rojo oscuro */
-    --destructive: 0 70% 50%;
+
+    --secondary: 20 45% 94%;
+    --secondary-foreground: 335 30% 30%;
+
+    --muted: 330 45% 92%;
+    --muted-foreground: 330 30% 45%;
+
+    --accent: 265 45% 90%;
+    --accent-foreground: 265 35% 32%;
+
+    --destructive: 0 68% 60%;
     --destructive-foreground: 0 0% 100%;
-  
-    /* Bordes e inputs: gris medio */
-    --border: 0 0% 40%;
-    --input: 0 0% 40%;
-    --ring: 120 40% 50%;
-  }  
+
+    --border: 330 35% 82%;
+    --input: 330 35% 82%;
+    --ring: 335 70% 64%;
+  }
+
+  .theme-dark {
+    /* Warm dark theme with coffee notes and forest greens */
+    --background: 26 24% 11%;
+    --foreground: 34 34% 92%;
+
+    --card: 28 22% 14%;
+    --card-foreground: 34 34% 92%;
+    --popover: 26 24% 13%;
+    --popover-foreground: 34 34% 92%;
+
+    --primary: 150 35% 42%;
+    --primary-foreground: 35 30% 94%;
+
+    --secondary: 28 24% 22%;
+    --secondary-foreground: 35 30% 88%;
+
+    --muted: 28 18% 26%;
+    --muted-foreground: 36 20% 70%;
+
+    --accent: 150 28% 24%;
+    --accent-foreground: 120 22% 82%;
+
+    --destructive: 6 64% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 28 20% 28%;
+    --input: 28 20% 28%;
+    --ring: 150 35% 42%;
+  }
+
   * {
     @apply border-border;
   }
@@ -136,5 +121,5 @@
   }
 }
 
-  @tailwind components;
-  @tailwind utilities;
+@tailwind components;
+@tailwind utilities;

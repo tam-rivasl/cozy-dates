@@ -1,35 +1,9 @@
+// supabase/functions/onboard-user/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-
-type MembershipStatus = "accepted" | "pending" | "declined";
-
-type MembershipRole = "owner" | "member";
-
-interface OnboardRequestBody {
-  userId: string;
-  displayName: string;
-  theme?: string | null;
-  avatarDataUrl?: string | null;
-  createCouple: boolean;
-  coupleName?: string | null;
-  coupleCode?: string | null;
-  registrationToken: string;
-}
-
-interface OnboardResponseBody {
-  inviteCode: string | null;
-  membershipStatus: MembershipStatus;
-}
-
-interface DataUrlResult {
-  blob: Blob;
-  mimeType: string;
-  extension: string;
-}
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error("Missing Supabase configuration in edge function environment.");
 }
@@ -41,77 +15,42 @@ const corsHeaders = {
 };
 
 function createLogger(requestId: string) {
-  return (level: "INFO" | "WARN" | "ERROR", message: string, payload?: unknown) => {
+  return (level: "INFO"|"WARN"|"ERROR", message: string, payload?: unknown) => {
     const entry = `[${new Date().toISOString()}] [onboard-user] [${requestId}] ${message}`;
     if (payload === undefined) {
-      if (level === "ERROR") {
-        console.error(entry);
-      } else if (level === "WARN") {
-        console.warn(entry);
-      } else {
-        console.log(entry);
-      }
-      return;
-    }
-
-    if (level === "ERROR") {
-      console.error(entry, payload);
-    } else if (level === "WARN") {
-      console.warn(entry, payload);
+      (level === "ERROR" ? console.error : level === "WARN" ? console.warn : console.log)(entry);
     } else {
-      console.log(entry, payload);
+      (level === "ERROR" ? console.error : level === "WARN" ? console.warn : console.log)(entry, payload);
     }
   };
 }
 
-function parseDataUrl(dataUrl: string): DataUrlResult {
+function parseDataUrl(dataUrl: string) {
   const match = dataUrl.match(/^data:(.*?);base64,(.*)$/);
-  if (!match) {
-    throw new Error("Invalid avatar format");
-  }
-
+  if (!match) throw new Error("Invalid avatar format");
   const mimeType = match[1];
   const base64 = match[2];
   const binary = atob(base64);
   const buffer = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    buffer[i] = binary.charCodeAt(i);
-  }
-
-  const extension = mimeType.split("/")[1] ?? "png";
+  for (let i = 0; i < binary.length; i += 1) buffer[i] = binary.charCodeAt(i);
+  const extension = (mimeType.split("/")[1] ?? "png").toLowerCase();
   const blob = new Blob([buffer], { type: mimeType });
-
   return { blob, mimeType, extension };
 }
 
-async function getUserMetadata(client: SupabaseClient, userId: string) {
+async function getUserMetadata(client: ReturnType<typeof createClient>, userId: string) {
   const { data, error } = await client.auth.admin.getUserById(userId);
-  if (error || !data.user) {
-    throw error ?? new Error("User not found");
-  }
+  if (error || !data.user) throw error ?? new Error("User not found");
   return data.user;
 }
 
-function normalizeInviteCode(code: string | null | undefined): string | null {
-  if (!code) {
-    return null;
-  }
-  return code.trim().toUpperCase();
-}
-
-function generateInviteCode(length = 8) {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < length; i += 1) {
-    code += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-  }
-  return code;
+function isValidUuid(v?: string | null) {
+  if (!v) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const requestId = crypto.randomUUID();
   const log = createLogger(requestId);
@@ -121,7 +60,7 @@ serve(async (req) => {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
   }
 
-  let payload: OnboardRequestBody;
+  let payload: any;
   try {
     payload = await req.json();
   } catch (error) {
@@ -129,51 +68,46 @@ serve(async (req) => {
     return Response.json({ error: "Invalid JSON payload" }, { status: 400, headers: corsHeaders });
   }
 
+  // INPUTS
   const {
     userId,
     displayName,
-    theme,
     avatarDataUrl,
-    createCouple,
-    coupleName,
-    coupleCode,
-    registrationToken,
+    createCouple,       // boolean
+    coupleName,         // opcional al crear
+    coupleCode,         // UUID string al unirse
+    registrationToken,  // token esperado en user_metadata.registration_token
   } = payload;
 
   if (!userId || !displayName || !registrationToken) {
-    log("WARN", "Missing required fields", payload);
+    log("WARN", "Missing required fields", { userId, displayName, registrationTokenPresent: !!registrationToken });
     return Response.json({ error: "Missing required fields" }, { status: 400, headers: corsHeaders });
   }
 
-  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+  const db = createClient(supabaseUrl, serviceRoleKey);
 
   try {
-    const user = await getUserMetadata(supabaseAdmin, userId);
-    const meta = user.user_metadata ?? {};
-
-    if (meta.registration_token && meta.registration_token !== registrationToken) {
+    // 1) Validar usuario y token de registro
+    const user = await getUserMetadata(db, userId);
+    const meta: Record<string, unknown> = user.user_metadata ?? {};
+    const storedToken = typeof meta.registration_token === "string" ? meta.registration_token : null;
+    if (storedToken && storedToken !== registrationToken) {
       log("WARN", "Registration token mismatch", { userId });
       return Response.json({ error: "Registration token mismatch" }, { status: 403, headers: corsHeaders });
     }
 
+    // 2) Subir avatar si viene
     let avatarUrl: string | null = null;
-
     if (avatarDataUrl) {
       try {
         const { blob, extension } = parseDataUrl(avatarDataUrl);
         const filePath = `${userId}/${Date.now()}.${extension}`;
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from("avatars")
-          .upload(filePath, blob, {
-            contentType: blob.type,
-            upsert: true,
-          });
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data: publicData } = supabaseAdmin.storage.from("avatars").getPublicUrl(filePath);
+        const { error: uploadError } = await db.storage.from("avatars").upload(filePath, blob, {
+          contentType: blob.type,
+          upsert: true,
+        });
+        if (uploadError) throw uploadError;
+        const { data: publicData } = db.storage.from("avatars").getPublicUrl(filePath);
         avatarUrl = publicData?.publicUrl ?? null;
       } catch (avatarError) {
         log("ERROR", "Failed to upload avatar", avatarError);
@@ -181,38 +115,52 @@ serve(async (req) => {
       }
     }
 
+    // 3) Asegurar profile (id = auth.users.id)
+    {
+      const { error: profileError } = await db.from("profiles").upsert(
+        {
+          id: userId,
+          display_name: displayName,
+          avatar_url: avatarUrl,
+        },
+        { onConflict: "id" },
+      );
+      if (profileError) throw profileError;
+    }
+
+    // 4) Crear o recuperar couple y crear membresía
     let coupleId: string | null = null;
     let inviteCode: string | null = null;
-    let membershipRole: MembershipRole = createCouple ? "owner" : "member";
-    let membershipStatus: MembershipStatus = "accepted";
+    let membershipRole = createCouple ? "owner" : "member";
+    let membershipStatus: "pending" | "accepted" | "declined" = "accepted";
 
     if (createCouple) {
-      const generatedCode = generateInviteCode();
-      const { data: coupleRow, error: coupleError } = await supabaseAdmin
+      // Crear pareja: invite_code UUID lo genera la DB por default
+      const { data: coupleRow, error: coupleError } = await db
         .from("couples")
-        .insert({
-          name: coupleName ?? displayName,
-          invite_code: generatedCode,
-        })
+        .insert({ name: coupleName ?? displayName })
         .select("id, invite_code")
         .single();
-
-      if (coupleError || !coupleRow) {
-        throw coupleError ?? new Error("Failed to create couple");
-      }
-
+      if (coupleError || !coupleRow) throw coupleError ?? new Error("Failed to create couple");
       coupleId = coupleRow.id;
-      inviteCode = coupleRow.invite_code ?? generatedCode;
+      inviteCode = coupleRow.invite_code as string;
+
+      // Inserta membresía aceptada del creador (role owner)
+      const { error: mErr } = await db
+        .from("profile_couples")
+        .insert({ profile_id: userId, couple_id: coupleId, status: "accepted", role: membershipRole });
+      if (mErr) throw mErr;
+
     } else {
-      const normalizedCode = normalizeInviteCode(coupleCode);
-      if (!normalizedCode) {
-        return Response.json({ error: "Couple code is required" }, { status: 400, headers: corsHeaders });
+      // Unirse con código: debe ser UUID (según DDL)
+      if (!isValidUuid(coupleCode)) {
+        return Response.json({ error: "Invalid invite code format" }, { status: 400, headers: corsHeaders });
       }
 
-      const { data: coupleRow, error: coupleError } = await supabaseAdmin
+      const { data: coupleRow, error: coupleError } = await db
         .from("couples")
-        .select("id")
-        .eq("invite_code", normalizedCode)
+        .select("id, invite_code")
+        .eq("invite_code", String(coupleCode).toLowerCase())
         .single();
 
       if (coupleError || !coupleRow) {
@@ -220,22 +168,16 @@ serve(async (req) => {
       }
 
       coupleId = coupleRow.id;
-      inviteCode = normalizedCode;
+      inviteCode = coupleRow.invite_code as string;
 
-      const { data: existingMembership, error: membershipFetchError } = await supabaseAdmin
+      // Upsert membresía a accepted
+      const { error: membershipError } = await db
         .from("profile_couples")
-        .select("status")
-        .eq("profile_id", userId)
-        .eq("couple_id", coupleId)
-        .maybeSingle();
-
-      if (membershipFetchError) {
-        throw membershipFetchError;
-      }
-
-      if (existingMembership?.status) {
-        membershipStatus = existingMembership.status as MembershipStatus;
-      }
+        .upsert(
+          { profile_id: userId, couple_id: coupleId, status: "accepted", role: membershipRole },
+          { onConflict: "profile_id,couple_id" },
+        );
+      if (membershipError) throw membershipError;
     }
 
     if (!coupleId) {
@@ -243,47 +185,21 @@ serve(async (req) => {
       return Response.json({ error: "Could not determine couple" }, { status: 500, headers: corsHeaders });
     }
 
-    const profilePayload = {
-      id: userId,
-      display_name: displayName,
-      avatar_url: avatarUrl,
-      theme: theme ?? null,
-      couple_id: coupleId,
-    };
-
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .upsert(profilePayload, { onConflict: "id" });
-
-    if (profileError) {
-      throw profileError;
-    }
-
-    const { error: membershipError } = await supabaseAdmin
-      .from("profile_couples")
-      .upsert(
-        {
-          profile_id: userId,
-          couple_id: coupleId,
-          status: membershipStatus,
-          role: membershipRole,
-        },
-        { onConflict: "profile_id,couple_id" },
-      );
-
-    if (membershipError) {
-      throw membershipError;
-    }
-
-    const responseBody: OnboardResponseBody = {
-      inviteCode,
-      membershipStatus,
-    };
-
+    const responseBody = { inviteCode, membershipStatus, coupleId };
     log("INFO", "Onboarding completed", { userId, coupleId, membershipStatus });
     return Response.json(responseBody, { status: 200, headers: corsHeaders });
-  } catch (error) {
-    log("ERROR", "Unexpected onboarding failure", error);
-    return Response.json({ error: error instanceof Error ? error.message : "Unexpected error" }, { status: 500, headers: corsHeaders });
+
+  } catch (error: any) {
+    // Mapea violaciones de triggers a 409 (conflict)
+    const msg = typeof error?.message === "string" ? error.message : String(error);
+    const lower = msg.toLowerCase();
+
+    if (lower.includes("already has 2 accepted members") ||
+        lower.includes("already has an accepted couple")) {
+      return Response.json({ error: msg }, { status: 409, headers: corsHeaders });
+    }
+
+    console.error("Unexpected onboarding failure", error);
+    return Response.json({ error: msg || "Unexpected error" }, { status: 500, headers: corsHeaders });
   }
 });

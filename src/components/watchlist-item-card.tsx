@@ -15,8 +15,9 @@ interface WatchlistItemCardProps {
 }
 
 export function WatchlistItemCard({ item, onDelete, onPlanMovieNight }: WatchlistItemCardProps) {
-  const addedByName = getProfileDisplayName(item.addedBy);
-  const creatorAvatarUrl = getProfileAvatarSrc(item.addedBy);
+  const creatorProfile = item.created_by ?? null;
+  const addedByName = getProfileDisplayName(creatorProfile);
+  const creatorAvatarUrl = getProfileAvatarSrc(creatorProfile);
   const isWatched = item.status === 'Watched';
 
   return (

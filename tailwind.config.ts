@@ -65,8 +65,8 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
-        tamara: 'hsl(var(--tamara-color))',
-        carlos: 'hsl(var(--carlos-color))',
+        blossom: 'hsl(var(--blossom-color))',
+        dark: 'hsl(var(--dark-color))',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -99,3 +99,4 @@ export default {
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
+

@@ -18,7 +18,7 @@ import { logError, logInfo, logWarn } from '@/lib/logger';
 interface MusicContextType {
   musicNotes: MusicNote[];
   isLoading: boolean;
-  addMusicNote: (item: Omit<MusicNote, 'id' | 'addedBy'>) => Promise<void>;
+  addMusicNote: (item: Omit<MusicNote, 'id' | 'created_by'>) => Promise<void>;
   deleteMusicNote: (noteId: string) => Promise<void>;
 }
 
@@ -27,7 +27,7 @@ interface MusicRow {
   title: string;
   message: string;
   playlist_url: string;
-  added_by: string | null;
+  created_by: string | null;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -59,7 +59,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase
       .from('music_notes')
-      .select('id, title, message, playlist_url, added_by')
+      .select('id, title, message, playlist_url, created_by')
       .eq('couple_id', activeCoupleId)
       .order('created_at', { ascending: false });
 
@@ -81,7 +81,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       title: row.title,
       notes: row.message,
       playlistUrl: row.playlist_url,
-      addedBy: row.added_by ? membersMap.get(row.added_by) ?? null : null,
+      created_by: row.created_by ? membersMap.get(row.created_by) ?? null : null,
     } satisfies MusicNote));
 
     setMusicNotes(mapped);
@@ -109,7 +109,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         message: note.notes,
         playlist_url: note.playlistUrl,
         couple_id: activeCoupleId,
-        added_by: user.id,
+        created_by: user.id,
       });
 
       if (error) {

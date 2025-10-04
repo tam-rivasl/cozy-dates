@@ -13,9 +13,11 @@ interface MusicNoteCardProps {
 }
 
 export function MusicNoteCard({ note, onDelete }: MusicNoteCardProps) {
-  const addedByName = getProfileDisplayName(note.addedBy);
-  const creatorAvatarUrl = getProfileAvatarSrc(note.addedBy);
-
+  const creatorProfile = note.created_by ?? null;
+  const addedByName = getProfileDisplayName(creatorProfile);
+  console.log("addedByName", addedByName);
+  const creatorAvatarUrl = getProfileAvatarSrc(creatorProfile);
+  console.log("creatorAvatarUrl", creatorAvatarUrl);
   return (
     <Card>
       <CardHeader>
@@ -36,7 +38,7 @@ export function MusicNoteCard({ note, onDelete }: MusicNoteCardProps) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Dedicated by:</span>
             <Avatar className="h-6 w-6">
-              <AvatarImage src={creatorAvatarUrl} alt={addedByName} />
+              <AvatarImage src={creatorAvatarUrl} alt={addedByName} className="object-cover" />
               <AvatarFallback>{addedByName.charAt(0)}</AvatarFallback>
             </Avatar>
             <span className="font-medium">{addedByName}</span>
