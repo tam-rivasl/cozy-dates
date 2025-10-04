@@ -21,19 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { logInfo } from '@/lib/logger';
-
-function getFallbackAvatar(userTheme: string | null): string | undefined {
-  logInfo('getFallbackAvatar', 'getFallbackAvatar', { userTheme });
-  if (userTheme === 'tamara') {
-    return '/img/tamara.png';
-  }
-
-  if (userTheme === 'carlos') {
-    return '/img/carlos.png';
-  }
-
-  return undefined;
-}
+import { getFallbackAvatarForTheme, normalizeThemeName } from '@/lib/theme';
 
 export function Header() {
   const { user, setUser } = useUser();
@@ -49,7 +37,7 @@ export function Header() {
       return user.avatarUrl;
     }
 
-    return getFallbackAvatar(user?.theme ?? null);
+    return getFallbackAvatarForTheme(normalizeThemeName(user?.theme ?? null));
   }, [user]);
 
   const handleLogout = () => {

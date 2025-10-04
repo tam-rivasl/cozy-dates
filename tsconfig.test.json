@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist-test",
+    "module": "commonjs",
+    "target": "ES2019",
+    "jsx": "react-jsx",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/lib/theme.ts",
+    "src/app/settings/profile-schema.ts",
+    "src/lib/types.ts",
+    "src/components/profile/couple-members-list.tsx",
+    "src/components/profile/__tests__/**/*.ts",
+    "src/components/profile/__tests__/**/*.tsx",
+    "src/lib/__tests__/**/*.ts",
+    "src/app/settings/__tests__/**/*.ts",
+    "src/components/ui/avatar.tsx",
+    "src/components/ui/card.tsx",
+    "src/components/ui/badge.tsx",
+    "src/lib/utils.ts"
+  ]
+}
