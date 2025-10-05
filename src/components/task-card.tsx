@@ -10,9 +10,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarDays, Tag, Flag, Trash2, User, Camera } from 'lucide-react';
 import { format } from 'date-fns';
-import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { getProfileAvatarSrc, getProfileDisplayName } from '@/lib/profile';
+import { PhotoGallery } from '@/components/media/photo-gallery';
 
 interface TaskCardProps {
   task: Task;
@@ -161,24 +161,12 @@ export function TaskCard({ task, onToggleComplete, onDelete, onAddPhoto }: TaskC
               </div>
             </div>
             {task.photos && task.photos.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                {task.photos.slice(0, 4).map((photo, index) => (
-                  <div key={photo} className="relative aspect-square">
-                    <Image
-                      src={photo}
-                      alt={`Memory ${index + 1}`}
-                      width={100}
-                      height={100}
-                      className="rounded-md object-cover w-full h-full"
-                    />
-                    {index === 3 && task.photos.length > 4 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
-                        <span className="text-white font-bold text-lg">+{task.photos.length - 4}</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <PhotoGallery
+                photos={task.photos}
+                altPrefix="Recuerdo de la tarea"
+                previewLimit={3}
+                gridClassName="grid-cols-2 sm:grid-cols-3"
+              />
             ) : (
               <p className="text-xs text-muted-foreground">No photos added yet.</p>
             )}

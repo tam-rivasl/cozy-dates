@@ -29,5 +29,14 @@ export function getProfileAvatarSrc(profile: Profile | null): string | undefined
 }
 
 export function getProfileDisplayName(profile: Profile | null): string {
-  return profile?.displayName ?? 'Unknown';
+  if (!profile) return 'Unknown';
+
+  const candidates = [profile.nickname, profile.firstName, profile.displayName];
+  for (const candidate of candidates) {
+    if (candidate && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+
+  return 'Unknown';
 }

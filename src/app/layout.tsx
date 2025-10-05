@@ -18,10 +18,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="theme-blossom">
+    <html lang="en" className="theme-automatic">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#d7cce6" />
+        <meta name="theme-color" content="#f3777e" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;700&display=swap" rel="stylesheet" />
