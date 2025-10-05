@@ -66,7 +66,8 @@ export default {
           ring: 'hsl(var(--sidebar-ring))',
         },
         blossom: 'hsl(var(--blossom-color))',
-        dark: 'hsl(var(--dark-color))',
+        terracota: 'hsl(var(--terracota-color))',
+        'dark-basic': 'hsl(var(--dark-basic-color))',
       },
       borderRadius: {
         lg: 'var(--radius)',

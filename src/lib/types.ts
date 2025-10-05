@@ -3,6 +3,12 @@ import type { AppTheme } from '@/lib/theme';
 export interface Profile {
   id: string;
   displayName: string;
+  firstName: string | null;
+  lastName: string | null;
+  nickname: string | null;
+  age: number | null;
+  contactEmail: string | null;
+  accountEmail: string | null;
   avatarUrl: string | null;
   theme: AppTheme | null;
   coupleId: string | null;

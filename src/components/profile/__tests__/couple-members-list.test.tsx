@@ -8,6 +8,12 @@ import type { CoupleMembership, CoupleSummary, Profile } from '../../../lib/type
 const currentUser: Profile = {
   id: 'user-1',
   displayName: 'Alex',
+  firstName: 'Alex',
+  lastName: 'Rivera',
+  nickname: 'Lex',
+  age: 29,
+  contactEmail: 'alex@example.com',
+  accountEmail: 'alex@example.com',
   avatarUrl: null,
   theme: 'blossom',
   coupleId: 'couple-1',
@@ -17,8 +23,14 @@ const currentUser: Profile = {
 const partner: Profile = {
   id: 'user-2',
   displayName: 'Sam',
+  firstName: 'Sam',
+  lastName: 'Lopez',
+  nickname: null,
+  age: 30,
+  contactEmail: 'sam@example.com',
+  accountEmail: 'sam@example.com',
   avatarUrl: null,
-  theme: 'dark',
+  theme: 'terracota',
   coupleId: 'couple-1',
   confirmedAt: '2024-01-01T00:00:00Z',
 };
@@ -49,7 +61,7 @@ test('CoupleMembersList renders members and highlights the current user', () => 
   assert.ok(html.includes('Alex'));
   assert.ok(html.includes('Sam'));
   assert.ok(html.includes('Tema Blossom'));
-  assert.ok(html.includes('Tema Dark'));
+  assert.ok(html.includes('Tema Terracota'));
   assert.ok(html.includes('Tú'));
   assert.ok(html.includes('Pendiente'));
 });

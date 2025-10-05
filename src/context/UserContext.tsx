@@ -35,6 +35,11 @@ interface ProfileRow {
   display_name: string;
   avatar_url: string | null;
   theme: string | null; // <- mantenemos theme
+  first_name: string | null;
+  last_name: string | null;
+  nickname: string | null;
+  age: number | null;
+  contact_email: string | null;
   // confirmed_at: string | null;   // <- quitalo del SELECT
 }
 
@@ -85,10 +90,21 @@ async function resolveAvatarUrl(rawUrl: string | null): Promise<string | null> {
   return null;
 }
 
-function mapProfile(row: ProfileRow, coupleId: string | null, confirmedAt: string | null): Profile {
+function mapProfile(
+  row: ProfileRow,
+  coupleId: string | null,
+  confirmedAt: string | null,
+  accountEmail: string | null,
+): Profile {
   return {
     id: row.id,
     displayName: row.display_name,
+    firstName: row.first_name ?? null,
+    lastName: row.last_name ?? null,
+    nickname: row.nickname ?? null,
+    age: row.age ?? null,
+    contactEmail: row.contact_email ?? null,
+    accountEmail,
     avatarUrl: row.avatar_url,
     theme: normalizeThemeName(row.theme),
     coupleId,
@@ -99,10 +115,13 @@ function mapProfile(row: ProfileRow, coupleId: string | null, confirmedAt: strin
 function applyTheme(profile: Profile | null) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  root.classList.remove('dark', 'theme-tamara', 'theme-carlos', 'theme-blossom', 'theme-dark');
+  root.classList.remove('dark', 'theme-tamara', 'theme-carlos', 'theme-blossom', 'theme-dark', 'theme-automatic', 'theme-terracota', 'theme-dark-basic');
 
   const theme = profile?.theme ?? null;
-  if (!theme) return;
+  if (!theme) {
+    root.classList.add('theme-automatic');
+    return;
+  }
 
   const classes = getThemeClassList(theme as AppTheme);
   if (classes.length === 0) return;
@@ -144,7 +163,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     // 1) Perfil propio
     const { data: profileRow, error: profileError } = await supabase
       .from('profiles')
-      .select('id, display_name, avatar_url, theme') // <- sin confirmed_at
+      .select('id, display_name, avatar_url, theme, first_name, last_name, nickname, age, contact_email') // <- sin confirmed_at
       .eq('id', authUser.id)
       .single();
 
@@ -163,6 +182,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const fallbackProfile: Profile = {
         id: authUser.id,
         displayName: fallbackDisplayName,
+        firstName: null,
+        lastName: null,
+        nickname: null,
+        age: null,
+        contactEmail: authUser.email ?? null,
+        accountEmail: authUser.email ?? null,
         avatarUrl: null,
         theme: null,
         coupleId: null,
@@ -204,6 +229,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       { ...profileRowTyped, avatar_url: resolvedAvatarUrl } as ProfileRow,
       coupleId,
       authUser.email_confirmed_at ?? null,
+      authUser.email ?? null,
     );
     setUserState(mappedProfile);
     applyTheme(mappedProfile);
@@ -233,7 +259,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       // Embed del otro miembro: requiere la policy nueva en profiles
       const { data: memberRows, error: memberError } = await supabase
         .from('profile_couples')
-        .select('profile:profiles(id, display_name, avatar_url, theme)')
+        .select('profile:profiles(id, display_name, avatar_url, theme, first_name, last_name, nickname, age, contact_email)')
         .eq('couple_id', coupleId)
         .eq('status', 'accepted');
 
@@ -255,6 +281,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
               { ...p, avatar_url: resolvedAvatarUrl } as ProfileRow,
               coupleId,
               authUser.email_confirmed_at ?? null,
+              null,
             );
           }),
         );

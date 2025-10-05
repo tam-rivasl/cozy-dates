@@ -38,3 +38,11 @@ npm run test
 npm run dev
 ```
 
+## Configuración de cuenta renovada
+
+- Formularios de perfil con datos personales ampliados (nombre, apellido, apodo, edad y correo editable).
+- Cambio seguro de contraseña directamente desde la pestaña de perfil.
+- Gestión de pareja mediante códigos de invitación compartidos, sin creación duplicada.
+- Nuevo selector de temas con "Automático", "Terracota" y "Dark básico" para personalizar la experiencia visual.
+- Galería fotográfica optimizada con previsualizaciones responsivas, overlay `+N` y visor inmersivo con fondo difuminado.
+

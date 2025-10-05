@@ -35,6 +35,7 @@ import {
   type AppTheme,
 } from "@/lib/theme";
 import {
+  passwordSchema,
   profileSchema,
   themeOptions,
   toPersistedTheme,
@@ -48,8 +49,7 @@ import {
  * - Del lado servidor (Edge Function y/o DB RLS) se DEBE verificar que `payload.user_id === auth.uid()`.
  */
 interface ManageCoupleRequest {
-  action: "create" | "join";
-  name?: string | null;
+  action: "join";
   inviteCode?: string;
   /** Enviamos para trazabilidad; el servidor debe validar contra auth.uid() */
   user_id: string;
@@ -73,7 +73,7 @@ const themeSelectItems: Array<{ value: ThemeOption; label: string }> = themeOpti
   (value) => {
     const label =
       value === "default"
-        ? "Automático"
+        ? "Automático (recomendado)"
         : `Tema ${THEME_LABELS[value as AppTheme]}`;
 
     return { value, label };
@@ -96,6 +96,13 @@ export default function SettingsPage() {
 
   // Estado UI controlado del formulario y operaciones asíncronas.
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
+  const [firstName, setFirstName] = useState(user?.firstName ?? "");
+  const [lastName, setLastName] = useState(user?.lastName ?? "");
+  const [nickname, setNickname] = useState(user?.nickname ?? "");
+  const [age, setAge] = useState(user?.age ? String(user.age) : "");
+  const [contactEmail, setContactEmail] = useState(
+    user?.contactEmail ?? user?.accountEmail ?? ""
+  );
   const [theme, setTheme] = useState<ThemeOption>(() => {
     const normalized = normalizeThemeName(user?.theme ?? null);
     return normalized ?? "default";
@@ -104,8 +111,11 @@ export default function SettingsPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isCoupleLoading, setIsCoupleLoading] = useState(false);
   const [inviteCodeInput, setInviteCodeInput] = useState("");
-  const [coupleNameInput, setCoupleNameInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const confirmedAtLabel = useMemo(() => {
     if (!user?.confirmedAt) return "Pendiente de confirmación";
@@ -129,9 +139,17 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user) {
       setDisplayName(user.displayName ?? "");
+      setFirstName(user.firstName ?? "");
+      setLastName(user.lastName ?? "");
+      setNickname(user.nickname ?? "");
+      setAge(user.age != null ? String(user.age) : "");
+      setContactEmail(user.contactEmail ?? user.accountEmail ?? "");
       const normalizedTheme = normalizeThemeName(user.theme ?? null);
       setTheme(normalizedTheme ?? "default");
       setAvatarFile(null);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     }
   }, [user]);
 
@@ -142,7 +160,7 @@ export default function SettingsPage() {
   const selectedThemeLabel =
     themeValue && THEME_LABELS[themeValue]
       ? `Tema ${THEME_LABELS[themeValue]}`
-      : "Automático";
+      : "Automático (recomendado)";
 
   const avatarPreviewUrl = useMemo(() => {
     if (!avatarFile) return null;
@@ -244,12 +262,23 @@ export default function SettingsPage() {
   // --- Actions ---
 
   const handleProfileSave = async () => {
-    const result = profileSchema.safeParse({ displayName, theme });
+    const result = profileSchema.safeParse({
+      displayName,
+      firstName,
+      lastName,
+      nickname,
+      age,
+      contactEmail,
+      theme,
+    });
     if (!result.success) {
-      const firstIssue = result.error.issues[0];
+      const messages = result.error.issues.map((issue) => issue.message);
       toast({
         title: "Revisa los campos del perfil",
-        description: firstIssue?.message ?? "Completa los datos requeridos.",
+        description:
+          messages.length > 0
+            ? messages.join("\n")
+            : "Completa los datos requeridos.",
         variant: "destructive",
       });
       return;
@@ -263,6 +292,7 @@ export default function SettingsPage() {
       logInfo("SettingsPage.handleProfileSave", "Actualizando perfil", {
         userId,
         theme: themeValue,
+        hasAvatar: Boolean(avatarFile),
       });
 
       const { error: updateError } = await supabase
@@ -270,6 +300,11 @@ export default function SettingsPage() {
         .update({
           id: userId, // redundante pero explícito (y útil si el server registra columnas)
           display_name: result.data.displayName.trim(),
+          first_name: result.data.firstName,
+          last_name: result.data.lastName,
+          nickname: result.data.nickname,
+          age: result.data.age,
+          contact_email: result.data.contactEmail,
           theme: themeValue,
           avatar_url: avatarUrl,
         })
@@ -279,13 +314,35 @@ export default function SettingsPage() {
         throw updateError;
       }
 
+      const previousEmail = user?.accountEmail ?? user?.contactEmail ?? null;
+      const emailChanged = result.data.contactEmail !== previousEmail;
+      if (emailChanged) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: result.data.contactEmail,
+        });
+
+        if (emailError) {
+          void supabase
+            .from("profiles")
+            .update({ contact_email: previousEmail })
+            .eq("id", userId);
+          throw new Error(
+            emailError.message ??
+              "No pudimos actualizar el correo electrónico. Intenta nuevamente."
+          );
+        }
+      }
+
       toast({
         title: "Perfil actualizado",
-        description: "Tus preferencias se guardaron correctamente.",
+        description: emailChanged
+          ? "Tus datos se guardaron. Revisa tu bandeja para confirmar el nuevo correo."
+          : "Tus datos personales y preferencias se guardaron correctamente.",
       });
 
       await refreshProfiles();
       setAvatarFile(null);
+      setContactEmail(result.data.contactEmail);
     } catch (err) {
       logError(
         "SettingsPage.handleProfileSave",
@@ -302,6 +359,87 @@ export default function SettingsPage() {
       });
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!currentPassword && !newPassword && !confirmPassword) {
+      toast({
+        title: "Completa los campos de contraseña",
+        description: "Ingresa tu contraseña actual y la nueva contraseña para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const passwordResult = passwordSchema.safeParse({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+
+    if (!passwordResult.success) {
+      const messages = passwordResult.error.issues.map((issue) => issue.message);
+      toast({
+        title: "No pudimos actualizar la contraseña",
+        description: messages.join("\n"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const authEmail = user?.accountEmail ?? user?.contactEmail ?? contactEmail;
+
+    try {
+      setIsUpdatingPassword(true);
+
+      if (!authEmail) {
+        throw new Error("No encontramos un correo autenticado para validar tu sesión.");
+      }
+
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: passwordResult.data.currentPassword,
+      });
+
+      if (reauthError) {
+        throw new Error("La contraseña actual no es válida.");
+      }
+
+      const { error: passwordError } = await supabase.auth.updateUser({
+        password: passwordResult.data.newPassword,
+      });
+
+      if (passwordError) {
+        throw new Error(
+          passwordError.message ?? "No pudimos actualizar la contraseña."
+        );
+      }
+
+      toast({
+        title: "Contraseña actualizada",
+        description: "Tu contraseña se cambió correctamente.",
+      });
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      logError(
+        "SettingsPage.handlePasswordChange",
+        "No pudimos actualizar la contraseña",
+        err
+      );
+      toast({
+        title: "No pudimos actualizar la contraseña",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Intenta nuevamente en unos minutos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -335,36 +473,12 @@ export default function SettingsPage() {
 
       await refreshProfiles();
       setInviteCodeInput("");
-      setCoupleNameInput("");
       return data;
     } catch (err) {
       logError("SettingsPage.invokeManageCouple", "Falló manage-couple", err);
       throw err;
     } finally {
       setIsCoupleLoading(false);
-    }
-  };
-
-  const handleCreateCouple = async () => {
-    try {
-      logInfo(
-        "SettingsPage.handleCreateCouple",
-        "Creando pareja desde ajustes",
-        {
-          userId,
-        }
-      );
-      await invokeManageCouple({
-        action: "create",
-        name: coupleNameInput.trim() || null,
-      });
-    } catch (err) {
-      logError("SettingsPage.handleCreateCouple", "Error creando pareja", err);
-      toast({
-        title: "No pudimos crear la pareja",
-        description: err instanceof Error ? err.message : "Intenta nuevamente.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -423,7 +537,7 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="container flex-1 space-y-10 px-4 pb-16 pt-8 sm:px-6 lg:px-10"
+        className="mx-auto flex w-full max-w-7xl flex-1 flex-col space-y-10 px-4 pb-16 pt-8 sm:px-6 lg:px-12 xl:px-16"
       >
         <PageHeading
           icon={Settings}
@@ -463,7 +577,7 @@ export default function SettingsPage() {
                     {selectedThemeLabel}
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-8">
                   <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-border/40 bg-background/80 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20 border-2 border-primary/40">
@@ -472,12 +586,15 @@ export default function SettingsPage() {
                           alt={user?.displayName ?? "Avatar"}
                         />
                         <AvatarFallback className="text-lg font-semibold">
-                          {user?.displayName?.charAt(0).toUpperCase() ?? "?"}
+                          {(user?.nickname ?? user?.displayName ?? "?").charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="space-y-1 text-sm">
-                        <p className="font-semibold text-foreground">{user?.displayName}</p>
+                        <p className="font-semibold text-foreground">{user?.nickname ?? user?.displayName}</p>
                         <p className="text-muted-foreground">Cuenta confirmada: {confirmedAtLabel}</p>
+                        {user?.contactEmail ? (
+                          <p className="text-muted-foreground">Correo activo: {user.contactEmail}</p>
+                        ) : null}
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -485,38 +602,118 @@ export default function SettingsPage() {
                     </div>
                   </section>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="displayName">Nombre para mostrar</Label>
-                      <Input
-                        id="displayName"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="Tu nombre"
-                        aria-describedby="display-name-helper"
-                      />
-                      <p id="display-name-helper" className="text-xs text-muted-foreground">
-                        Mínimo 1 carácter, máximo 80.
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="theme">Tema</Label>
-                      <Select value={theme} onValueChange={(value) => setTheme(value as ThemeOption)}>
-                        <SelectTrigger id="theme">
-                          <SelectValue placeholder="Selecciona un tema" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {themeSelectItems.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="grid gap-6 xl:grid-cols-2">
+                    <section className="space-y-4 rounded-2xl border border-border/40 bg-background/70 p-5 shadow-inner shadow-primary/5">
+                      <div>
+                        <h3 className="text-sm font-semibold text-muted-foreground">Identidad</h3>
+                        <p className="text-xs text-muted-foreground">Estos campos se comparten únicamente con tu pareja.</p>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="firstName">Nombre</Label>
+                          <Input
+                            id="firstName"
+                            autoComplete="given-name"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            placeholder="Ej. Ana"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="lastName">Apellido</Label>
+                          <Input
+                            id="lastName"
+                            autoComplete="family-name"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            placeholder="Ej. Gómez"
+                          />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label htmlFor="nickname">Apodo</Label>
+                          <Input
+                            id="nickname"
+                            autoComplete="nickname"
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value)}
+                            placeholder="Cómo te llama tu pareja"
+                          />
+                          <p className="text-xs text-muted-foreground">Opcional. Usaremos el apodo en tarjetas y recordatorios.</p>
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label htmlFor="displayName">Nombre para mostrar</Label>
+                          <Input
+                            id="displayName"
+                            autoComplete="name"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="Tu nombre público"
+                            aria-describedby="display-name-helper"
+                          />
+                          <p id="display-name-helper" className="text-xs text-muted-foreground">
+                            Mínimo 1 carácter, máximo 80. Es el nombre que verá tu pareja en la app.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+                    <section className="space-y-4 rounded-2xl border border-border/40 bg-background/70 p-5 shadow-inner shadow-primary/5">
+                      <div>
+                        <h3 className="text-sm font-semibold text-muted-foreground">Contacto y preferencias</h3>
+                        <p className="text-xs text-muted-foreground">Controla cómo nos comunicamos contigo y el estilo visual.</p>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label htmlFor="contactEmail">Correo electrónico</Label>
+                          <Input
+                            id="contactEmail"
+                            type="email"
+                            autoComplete="email"
+                            value={contactEmail}
+                            onChange={(e) => setContactEmail(e.target.value)}
+                            placeholder="tu@email.com"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Si lo modificas, te enviaremos un correo para confirmar el cambio.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="age">Edad</Label>
+                          <Input
+                            id="age"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={age}
+                            onChange={(e) => {
+                              const next = e.target.value.replace(/[^0-9]/g, "").slice(0, 3);
+                              setAge(next);
+                            }}
+                            placeholder="Ej. 29"
+                            aria-describedby="age-helper"
+                          />
+                          <p id="age-helper" className="text-xs text-muted-foreground">
+                            Opcional. Valores entre 0 y 120 años.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="theme">Tema</Label>
+                          <Select value={theme} onValueChange={(value) => setTheme(value as ThemeOption)}>
+                            <SelectTrigger id="theme">
+                              <SelectValue placeholder="Selecciona un tema" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {themeSelectItems.map((item) => (
+                                <SelectItem key={item.value} value={item.value}>
+                                  {item.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </section>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                     <div className="space-y-2">
                       <Label htmlFor="avatar">Avatar</Label>
                       <Input
@@ -535,20 +732,78 @@ export default function SettingsPage() {
                     <div className="space-y-1 rounded-2xl border border-border/40 bg-muted/40 p-3 text-xs text-muted-foreground">
                       <p className="font-semibold text-foreground">Buenas prácticas</p>
                       <p>Utiliza imágenes centradas para optimizar el recorte circular.</p>
-                      <p>No compartas datos sensibles dentro del avatar.</p>
+                      <p>Evita compartir datos sensibles dentro del avatar.</p>
                     </div>
                   </div>
 
-                  <Button
-                    onClick={handleProfileSave}
-                    disabled={isSavingProfile}
-                    className="w-full sm:w-auto"
-                  >
-                    {isSavingProfile ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Guardar cambios
-                  </Button>
+                  <section className="space-y-4 rounded-2xl border border-border/40 bg-background/70 p-5 shadow-inner shadow-primary/5">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <h3 className="text-sm font-semibold text-muted-foreground">Actualizar contraseña</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Usa al menos 12 caracteres y combina mayúsculas, minúsculas y símbolos para mayor seguridad.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword">Contraseña actual</Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          autoComplete="current-password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">Nueva contraseña</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          autoComplete="new-password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirmar nueva contraseña</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          autoComplete="new-password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handlePasswordChange}
+                        disabled={isUpdatingPassword}
+                      >
+                        {isUpdatingPassword ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : null}
+                        Cambiar contraseña
+                      </Button>
+                    </div>
+                  </section>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      onClick={handleProfileSave}
+                      disabled={isSavingProfile}
+                      className="w-full sm:w-auto"
+                    >
+                      {isSavingProfile ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
+                      Guardar cambios
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -571,7 +826,7 @@ export default function SettingsPage() {
                   <div>
                     <CardTitle>Gestión de pareja</CardTitle>
                     <CardDescription>
-                      Agrega o comparte tu código seguro para sincronizar agendas y recuerdos.
+                      Vincula tu cuenta con el código compartido por tu pareja y mantén los datos sincronizados.
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -618,51 +873,33 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <p className="rounded-2xl border border-dashed border-border/40 bg-background/60 p-4 text-sm text-muted-foreground">
-                      Aún no tienes una pareja vinculada. Crea una nueva o ingresa el código que te compartieron.
+                      Aún no tienes una pareja vinculada. Solicita el código de invitación a tu pareja y actívalo para comenzar a compartir recuerdos.
                     </p>
                   )}
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-3 rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
-                      <Label htmlFor="coupleName">Crear pareja nueva</Label>
-                      <Input
-                        id="coupleName"
-                        value={coupleNameInput}
-                        onChange={(e) => setCoupleNameInput(e.target.value)}
-                        placeholder="Nombre opcional"
-                        disabled={Boolean(activeCouple) || isCoupleLoading}
-                      />
-                      <Button
-                        onClick={handleCreateCouple}
-                        disabled={isCoupleLoading || Boolean(activeCouple)}
-                        className="w-full"
-                      >
-                        {isCoupleLoading ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : null}
-                        Crear pareja
-                      </Button>
-                    </div>
-
-                    <div className="space-y-3 rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
-                      <Label htmlFor="inviteCode">Tengo un código</Label>
-                      <Input
-                        id="inviteCode"
-                        value={inviteCodeInput}
-                        onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
-                        placeholder="Ej. ABCD1234"
-                        disabled={Boolean(activeCouple) || isCoupleLoading}
-                      />
+                  <div className="space-y-3 rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
+                    <Label htmlFor="inviteCode">Tengo un código de pareja</Label>
+                    <Input
+                      id="inviteCode"
+                      value={inviteCodeInput}
+                      onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
+                      placeholder="Ej. ABCD1234"
+                      disabled={Boolean(activeCouple) || isCoupleLoading}
+                    />
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <Button
                         onClick={handleJoinCouple}
                         disabled={isCoupleLoading || Boolean(activeCouple)}
-                        className="w-full"
+                        className="w-full sm:w-auto"
                       >
                         {isCoupleLoading ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : null}
-                        Unirme con código
+                        Vincular pareja
                       </Button>
+                      <p className="text-xs text-muted-foreground sm:ml-3">
+                        El titular puede compartir el código desde esta misma sección.
+                      </p>
                     </div>
                   </div>
                 </CardContent>
